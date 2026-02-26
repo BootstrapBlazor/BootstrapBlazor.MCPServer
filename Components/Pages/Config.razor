@@ -1,0 +1,79 @@
+@page "/config"
+@using BootstrapBlazor.McpServer.Services
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.Extensions.Localization
+@attribute [Authorize]
+@inject AppSettingsManager SettingsManager
+@inject ToastService ToastService
+@inject IStringLocalizer<Config> Localizer
+
+<PageTitle>@Localizer["PageTitle"]</PageTitle>
+
+<Card>
+    <HeaderTemplate>
+        <div class="fw-bold"><i class="fa-solid fa-gears"></i> @Localizer["ServerConfiguration"]</div>
+    </HeaderTemplate>
+    <BodyTemplate>
+        <ValidateForm Model="@Model" OnValidSubmit="OnSave">
+            <div class="row g-3">
+                <div class="col-12 col-sm-6">
+                    <BootstrapInput @bind-Value="Model.RepositoryUrl" />
+                </div>
+                <div class="col-12 col-sm-6">
+                    <BootstrapInput @bind-Value="Model.CronSchedule" />
+                </div>
+                <div class="col-12 col-sm-6">
+                    <BootstrapInput @bind-Value="Model.LocalPath" />
+                </div>
+                <div class="col-12 col-sm-6">
+                    <BootstrapInput @bind-Value="Model.OutputDir" />
+                </div>
+                
+                <Divider Text="@Localizer["AIContextSettings"]" />
+                
+                <div class="col-12 col-sm-6">
+                    <BootstrapInput @bind-Value="Model.AiBaseUrl" />
+                </div>
+                <div class="col-12 col-sm-6">
+                    <BootstrapInput @bind-Value="Model.AiModel" />
+                </div>
+                <div class="col-12 mt-3">
+                    <BootstrapInput @bind-Value="Model.AiApiKey" type="password" />
+                </div>
+                <div class="col-12 mt-3 d-flex align-items-center gap-2">
+                    <Switch @bind-Value="Model.AiEnabled" ShowLabel="true" DisplayText="@Localizer["AiEnabled"]" />
+                    <small class="text-muted">@Localizer["AiEnabledDesc"]</small>
+                </div>
+                
+                <Divider Text="@Localizer["SecuritySettings"]" />
+                <div class="col-12 col-sm-6 mt-3">
+                    <BootstrapInput @bind-Value="Model.AdminUsername" />
+                </div>
+                <div class="col-12 col-sm-6 mt-3">
+                    <BootstrapInput @bind-Value="Model.AdminPassword" type="password" />
+                </div>
+                
+                <div class="col-12 mt-4 text-end">
+                    <Button Color="Color.Primary" Icon="fa-solid fa-save" Text="@Localizer["SaveConfiguration"]" ButtonType="ButtonType.Submit" />
+                </div>
+            </div>
+        </ValidateForm>
+    </BodyTemplate>
+</Card>
+
+@code {
+    private AppSettingsModel Model { get; set; } = new();
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        Model = SettingsManager.LoadSettings();
+    }
+
+    private Task OnSave(EditContext context)
+    {
+        SettingsManager.SaveSettings(Model);
+        ToastService.Success(Localizer["SettingsSaved"], Localizer["SettingsSavedDesc"]);
+        return Task.CompletedTask;
+    }
+}

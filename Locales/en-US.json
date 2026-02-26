@@ -1,0 +1,43 @@
+{
+    "BootstrapBlazor.McpServer.Components.Layout.MainLayout": {
+        "AppTitle": "BootstrapBlazor MCP Server Control Panel",
+        "Dashboard": "Dashboard",
+        "Settings": "Settings",
+        "Logout": "Logout"
+    },
+    "BootstrapBlazor.McpServer.Components.Pages.Index": {
+        "PageTitle": "Dashboard - MCP Server",
+        "ServerStatus": "Server Status",
+        "Online": "Online",
+        "NoSyncLogs": "No sync logs available yet.",
+        "ManualSync": "Manual Synchronization",
+        "ForceSync": "Force Sync Now",
+        "ManualSyncDesc": "Click to forcefully trigger Git pull and document extraction process.",
+        "Target": "Target",
+        "LocalPath": "Local Path",
+        "CronSchedule": "Cron Schedule"
+    },
+    "BootstrapBlazor.McpServer.Components.Pages.Config": {
+        "PageTitle": "Configuration - MCP Server",
+        "ServerConfiguration": "Server Configuration",
+        "AIContextSettings": "AI Context Settings",
+        "SecuritySettings": "Security Settings",
+        "SaveConfiguration": "Save Configuration",
+        "SettingsSaved": "Settings Saved",
+        "SettingsSavedDesc": "The configuration changes have been written. You may need to restart the server to see all effects.",
+        "AiEnabled": "Enable AI Summary",
+        "AiEnabledDesc": "When disabled, the Ask endpoint returns raw documentation instead of calling the AI service."
+    },
+    "BootstrapBlazor.McpServer.Services.AppSettingsModel": {
+        "RepositoryUrl": "Git Repository URL",
+        "CronSchedule": "Sync Cron Schedule",
+        "LocalPath": "Local Clone Path",
+        "OutputDir": "Documentation Output Directory",
+        "AiBaseUrl": "AI API Base URL",
+        "AiApiKey": "AI API Key",
+        "AiModel": "AI Model Name",
+        "AiEnabled": "Enable AI Summary",
+        "AdminUsername": "Admin Username",
+        "AdminPassword": "Admin Password"
+    }
+}
