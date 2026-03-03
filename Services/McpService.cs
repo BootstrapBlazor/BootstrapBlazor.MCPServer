@@ -1,10 +1,8 @@
-using System;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
+// Copyright (c) BootstrapBlazor & Argo Zhang (argo@live.ca). All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+// Website: https://www.blazor.zone
+
 using ModelContextProtocol.Server;
-using Microsoft.Extensions.Logging;
 
 namespace BootstrapBlazor.McpServer.Services;
 
@@ -30,7 +28,7 @@ public class McpService
         var settings = _settingsManager.LoadSettings();
         var apiPath = Path.Combine(settings.OutputDir, "API");
         if (!Directory.Exists(apiPath)) return "Documentation not found.";
-        
+
         var files = Directory.GetFiles(apiPath, "*.md");
         var componentNames = files.Select(Path.GetFileNameWithoutExtension).ToArray();
         return string.Join("\n", componentNames);

@@ -1,19 +1,12 @@
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Routing;
-using Microsoft.AspNetCore.Localization;
-using System.Globalization;
-using Microsoft.AspNetCore.Http;
+// Copyright (c) BootstrapBlazor & Argo Zhang (argo@live.ca). All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+// Website: https://www.blazor.zone
+
+using BootstrapBlazor.McpServer.Services;
+using Coravel;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Security.Claims;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using ModelContextProtocol.Server;
-using Coravel;
-using BootstrapBlazor.McpServer.Services;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
@@ -43,11 +36,11 @@ builder.Services.AddBootstrapBlazor();
 builder.Services.AddScheduler();
 var mcpBuilder = builder.Services.AddMcpServer();
 
-// Disable Stdio transport if running in Docker container, as it will crash Kestrel 
+// Disable Stdio transport if running in Docker container, as it will crash Kestrel
 // on startup due to immediate EOF on empty standard input.
 if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") != "true")
 {
-    mcpBuilder.WithStdioServerTransport(); 
+    mcpBuilder.WithStdioServerTransport();
 }
 
 mcpBuilder.WithHttpTransport()       // Native MCP SSE support via ASP.NET Core
@@ -79,26 +72,26 @@ app.Services.UseScheduler(scheduler =>
 });
 
 // REST HTTP API Endpoints for external agents/LLMs (Dify, FastGPT, etc.)
-app.MapGet("/api/components", (McpService mcp) => 
+app.MapGet("/api/components", (McpService mcp) =>
 {
     return Results.Ok(mcp.GetComponentList());
 });
 
-app.MapGet("/api/components/search", (string keyword, McpService mcp) => 
+app.MapGet("/api/components/search", (string keyword, McpService mcp) =>
 {
     var content = mcp.SearchComponentKeyword(new McpService.SearchComponentArgs { Keyword = keyword });
     if (content.Contains("No components found")) return Results.NotFound(content);
     return Results.Ok(content.Split('\n'));
 });
 
-app.MapGet("/api/components/{name}/ask", async (string name, string q, McpService mcp) => 
+app.MapGet("/api/components/{name}/ask", async (string name, string q, McpService mcp) =>
 {
     var answer = await mcp.AskComponentExpert(new McpService.AskComponentExpertArgs { ComponentName = name, Question = q });
     if (answer.Contains("not found")) return Results.NotFound(answer);
     return Results.Text(answer, "text/markdown");
 });
 
-app.MapGet("/api/components/{name}/docs", (string name, McpService mcp) => 
+app.MapGet("/api/components/{name}/docs", (string name, McpService mcp) =>
 {
     var docs = mcp.GetComponentDocs(new McpService.GetComponentDocsArgs { ComponentName = name });
     if (docs.Contains("not found") || docs.Contains("not found")) return Results.NotFound(docs);

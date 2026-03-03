@@ -1,10 +1,7 @@
-using System;
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Text.Json;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
+// Copyright (c) BootstrapBlazor & Argo Zhang (argo@live.ca). All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+// Website: https://www.blazor.zone
+
 using Microsoft.Extensions.AI;
 
 namespace BootstrapBlazor.McpServer.Services;
@@ -49,18 +46,18 @@ public class AiIntegrationService
                 if (!baseUrl.EndsWith("/")) baseUrl += "/";
                 options.Endpoint = new Uri(baseUrl);
             }
-            
+
             var openAiClient = new OpenAI.OpenAIClient(new System.ClientModel.ApiKeyCredential(apiKey), options);
-            
+
             // In MEAI 10.x preview, AsChatClient was renamed to AsIChatClient
             IChatClient chatClient = openAiClient.GetChatClient(model).AsIChatClient();
-            
+
             var messages = new System.Collections.Generic.List<Microsoft.Extensions.AI.ChatMessage>
             {
                 new Microsoft.Extensions.AI.ChatMessage(Microsoft.Extensions.AI.ChatRole.System, systemPrompt),
                 new Microsoft.Extensions.AI.ChatMessage(Microsoft.Extensions.AI.ChatRole.User, userMessage)
             };
-            
+
             // In MEAI 10.x preview, CompleteAsync was renamed to GetResponseAsync
             var response = await chatClient.GetResponseAsync(messages, new Microsoft.Extensions.AI.ChatOptions { Temperature = 0.3f });
 

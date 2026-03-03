@@ -1,13 +1,12 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+// Copyright (c) BootstrapBlazor & Argo Zhang (argo@live.ca). All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+// Website: https://www.blazor.zone
+
+using Microsoft.AspNetCore.Components;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
-using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.Logging;
 
 namespace BootstrapBlazor.McpServer.Services;
 
@@ -24,7 +23,7 @@ public class DocsExtractorService
     public void Extract(string basePath, string outputDir)
     {
         _logger.LogInformation("BootstrapBlazor RAG Extractor started for basePath: {BasePath}", basePath);
-        
+
         string docsJsonPath = Path.Combine(basePath, "src/BootstrapBlazor.Server/docs.json");
         string xmlPath = Path.Combine(basePath, "src/BootstrapBlazor/BootstrapBlazor.xml");
         string samplesPath = Path.Combine(basePath, "src/BootstrapBlazor.Server/Components/Samples");
@@ -105,7 +104,7 @@ public class DocsExtractorService
             // Use the already loaded assembly instead of trying to load it from a physical file
             // to prevent AssemblyLoadContext mismatched versions.
             var assembly = AppDomain.CurrentDomain.GetAssemblies()
-                                    .FirstOrDefault(a => a.GetName().Name == "BootstrapBlazor") 
+                                    .FirstOrDefault(a => a.GetName().Name == "BootstrapBlazor")
                            ?? Assembly.LoadFrom(dllPath);
 
             var componentTypes = assembly.GetTypes()

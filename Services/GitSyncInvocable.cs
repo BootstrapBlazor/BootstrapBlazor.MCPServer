@@ -1,10 +1,9 @@
-using System;
-using System.IO;
-using System.Threading.Tasks;
+// Copyright (c) BootstrapBlazor & Argo Zhang (argo@live.ca). All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+// Website: https://www.blazor.zone
+
 using Coravel.Invocable;
 using LibGit2Sharp;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 
 namespace BootstrapBlazor.McpServer.Services;
 
@@ -27,7 +26,7 @@ public class GitSyncInvocable : IInvocable
     public Task Invoke()
     {
         _logger.LogInformation("Starting Git Sync & Extraction Job...");
-        
+
         try
         {
             var settings = _settingsManager.LoadSettings();
@@ -82,7 +81,7 @@ public class GitSyncInvocable : IInvocable
 
             // Execute the extraction
             _extractorService.Extract(basePath, outputDir);
-            
+
             _logger.LogInformation("Git Sync & Extraction Job completed successfully.");
         }
         catch (Exception ex)
