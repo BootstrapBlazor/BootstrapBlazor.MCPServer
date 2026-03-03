@@ -1,0 +1,22 @@
+root = true
+
+# To learn more about .editorconfig see https://aka.ms/editorconfigdocs
+[*]
+charset = utf-8
+indent_style = space
+trim_trailing_whitespace = true
+insert_final_newline = true
+spelling_exclusion_path = .\exclusion.dic
+
+[*.{xml,config,csproj,nuspec,props,resx,targets,yml,tasks,json}]
+indent_size = 2
+
+[*.sh]
+end_of_line = lf
+
+[*.cs]
+dotnet_analyzer_diagnostic.category-Style.severity = none
+csharp_style_namespace_declarations = file_scoped:silent
+
+# Add file header
+file_header_template = Copyright (c) BootstrapBlazor & Argo Zhang (argo@live.ca). All rights reserved.\nLicensed under the Apache License, Version 2.0. See License.txt in the project root for license information.\nWebsite: https://www.blazor.zone
