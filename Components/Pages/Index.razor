@@ -1,0 +1,70 @@
+@page "/"
+@using BootstrapBlazor.McpServer.Services
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.Extensions.Localization
+@attribute [Authorize]
+@inject GitSyncInvocable GitSync
+@inject AppSettingsManager SettingsManager
+@inject IJSRuntime JSRuntime
+@inject IStringLocalizer<Index> Localizer
+
+<PageTitle>@Localizer["PageTitle"]</PageTitle>
+
+<div class="row g-3">
+    <div class="col-12 col-md-4">
+        <Card Color="Color.Primary" IsCenter="true">
+            <HeaderTemplate>
+                <div class="fw-bold"><i class="fa-solid fa-server"></i> @Localizer["ServerStatus"]</div>
+            </HeaderTemplate>
+            <BodyTemplate>
+                <h3 class="text-success mt-2">@Localizer["Online"]</h3>
+                <p class="text-muted mb-0">RAG Server running smoothly.</p>
+                <hr />
+                <div class="text-start fs-6">
+                    <div><b>@Localizer["Target"]:</b> @_settings.RepositoryUrl</div>
+                    <div><b>@Localizer["CronSchedule"]:</b> @_settings.CronSchedule</div>
+                    <div><b>OutputDir:</b> @_settings.OutputDir</div>
+                </div>
+            </BodyTemplate>
+        </Card>
+    </div>
+
+    <div class="col-12 col-md-8">
+        <Card>
+            <HeaderTemplate>
+                <div class="fw-bold"><i class="fa-solid fa-rotate"></i> @Localizer["ManualSync"]</div>
+            </HeaderTemplate>
+            <BodyTemplate>
+                <p>@Localizer["ManualSyncDesc"]</p>
+                <Button Color="Color.Primary" Icon="fa-solid fa-bolt" Text="@Localizer["ForceSync"]" IsAsync="true" OnClick="OnSyncClick" />
+                
+                @if (!string.IsNullOrEmpty(_syncResult))
+                {
+                    <div class="alert alert-success mt-3" role="alert">
+                        <i class="fa-solid fa-check-circle me-2"></i> @_syncResult
+                    </div>
+                }
+            </BodyTemplate>
+        </Card>
+    </div>
+</div>
+
+@code {
+    private string _syncResult = "";
+    private AppSettingsModel _settings = new();
+
+    protected override void OnInitialized()
+    {
+        _settings = SettingsManager.LoadSettings();
+    }
+
+    private async Task OnSyncClick()
+    {
+        _syncResult = "Syncing in background... Check the Docker logs for detailed extraction progress.";
+        await InvokeAsync(StateHasChanged);
+        
+        await GitSync.Invoke();
+        
+        _syncResult = "Sync Finished! RAG datasets have been updated.";
+    }
+}
