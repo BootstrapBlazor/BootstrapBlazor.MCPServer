@@ -1,0 +1,168 @@
+@page "/repositories"
+@using BootstrapBlazor.McpServer.Services
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.Extensions.Localization
+@attribute [Authorize]
+@inject RepositoryManager RepositoryManager
+@inject RepositoryService RepositoryService
+@inject NavigationManager Navigation
+@inject IStringLocalizer<Repositories> Localizer
+@inject ToastService ToastService
+
+<PageTitle>@Localizer["PageTitle"]</PageTitle>
+
+<div class="row g-3">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4><i class="fa-solid fa-database"></i> @Localizer["Repositories"]</h4>
+            <Button Color="Color.Primary" Icon="fa-solid fa-plus" Text="@Localizer["AddRepository"]" OnClick="ShowAddModal" />
+        </div>
+    </div>
+
+    @if (_repositories.Count == 0)
+    {
+        <div class="col-12">
+            <Card>
+                <BodyTemplate>
+                    <div class="text-center text-muted py-4">
+                        <i class="fa-solid fa-folder-open fs-1"></i>
+                        <p class="mt-2">@Localizer["NoRepositories"]</p>
+                        <Button Color="Color.Primary" Text="@Localizer["AddFirstRepository"]" OnClick="ShowAddModal" />
+                    </div>
+                </BodyTemplate>
+            </Card>
+        </div>
+    }
+    else
+    {
+        @foreach (var repo in _repositories)
+        {
+            <div class="col-12 col-md-6 col-lg-4">
+                <RepositoryCard Repository="repo" OnRepositoryChanged="LoadRepositories" />
+            </div>
+        }
+    }
+</div>
+
+<Modal @ref="_addModal" Title="@Localizer["AddNewRepository"]">
+    <BodyTemplate>
+        <div class="row g-3">
+            <div class="col-12">
+                <BootstrapInput @bind-Value="_newRepository.Name" DisplayText="@Localizer["Name"]" />
+            </div>
+            <div class="col-12">
+                <BootstrapInput @bind-Value="_newRepository.Url" DisplayText="@Localizer["RepositoryUrl"]" />
+            </div>
+            <div class="col-12 col-sm-6">
+                <BootstrapInput @bind-Value="_newRepository.LocalPath" DisplayText="@Localizer["LocalPath"]" />
+            </div>
+            <div class="col-12 col-sm-6">
+                <BootstrapInput @bind-Value="_newRepository.OutputDir" DisplayText="@Localizer["OutputDir"]" />
+            </div>
+            <div class="col-12 col-sm-6">
+                <BootstrapInput @bind-Value="_newRepository.CronSchedule" DisplayText="@Localizer["CronSchedule"]" />
+            </div>
+            <div class="col-12 col-sm-6">
+                <BootstrapInput @bind-Value="_newRepository.TargetFramework" DisplayText="@Localizer["TargetFramework"]" />
+            </div>
+            <div class="col-12 col-sm-6">
+                <Select @bind-Value="_newRepository.Provider" DisplayText="@Localizer["Provider"]">
+                    <SelectOptions>
+                        <SelectOption Text="GitHub" Value="GitHub" />
+                        <SelectOption Text="Gitee" Value="Gitee" />
+                        <SelectOption Text="GitLab" Value="GitLab" />
+                        <SelectOption Text="Other" Value="Other" />
+                    </SelectOptions>
+                </Select>
+            </div>
+        </div>
+    </BodyTemplate>
+    <FooterTemplate>
+        <Button Color="Color.Secondary" Text="@Localizer["Cancel"]" OnClick="CloseAddModal" />
+        <Button Color="Color.Primary" Icon="fa-solid fa-plus" Text="@Localizer["Add"]" OnClick="OnAddRepository" />
+    </FooterTemplate>
+</Modal>
+
+@code {
+    private List<RepositoryInfo> _repositories = new();
+    private RepositoryInfo _newRepository = new();
+    private Modal? _addModal;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        LoadRepositories();
+    }
+
+    private void LoadRepositories()
+    {
+        _repositories = RepositoryManager.LoadRepositories();
+    }
+
+    private void ShowAddModal()
+    {
+        _newRepository = new RepositoryInfo
+        {
+            Id = Guid.NewGuid().ToString(),
+            Name = "",
+            Url = "",
+            LocalPath = "/app/data/",
+            OutputDir = "/app/data/output/",
+            CronSchedule = "0 */4 * * *",
+            TargetFramework = "net10.0",
+            Provider = GitProvider.Gitee,
+            IsEnabled = true,
+            SyncStatus = SyncStatus.NeverRun
+        };
+        _addModal?.Show();
+    }
+
+    private void CloseAddModal()
+    {
+        _addModal?.Close();
+    }
+
+    private async Task OnAddRepository()
+    {
+        // Validate required fields
+        if (string.IsNullOrWhiteSpace(_newRepository.Name))
+        {
+            ToastService?.Error(Localizer?["ValidationError"] ?? "Validation Error", 
+                Localizer?["NameRequired"] ?? "Repository name is required");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_newRepository.Url))
+        {
+            ToastService?.Error(Localizer?["ValidationError"] ?? "Validation Error", 
+                Localizer?["UrlRequired"] ?? "Repository URL is required");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_newRepository.LocalPath))
+        {
+            ToastService?.Error(Localizer?["ValidationError"] ?? "Validation Error", 
+                Localizer?["LocalPathRequired"] ?? "Local path is required");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_newRepository.OutputDir))
+        {
+            ToastService?.Error(Localizer?["ValidationError"] ?? "Validation Error", 
+                Localizer?["OutputDirRequired"] ?? "Output directory is required");
+            return;
+        }
+
+        // Generate slug from name if empty
+        if (string.IsNullOrEmpty(_newRepository.Slug))
+        {
+            _newRepository.Slug = _newRepository.Name.ToLowerInvariant()
+                .Replace(" ", "-")
+                .Replace(".", "-");
+        }
+
+        RepositoryManager.AddRepository(_newRepository);
+        LoadRepositories();
+        CloseAddModal();
+    }
+}

@@ -1,0 +1,214 @@
+@using BootstrapBlazor.McpServer.Services
+@using Microsoft.Extensions.Localization
+
+@inject RepositoryManager RepositoryManager
+@inject ToastService ToastService
+@inject SwalService SwalService
+
+<Card class="mb-3">
+    <HeaderTemplate>
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <i class="@GetProviderIcon()"></i>
+                <span class="fw-bold ms-2">@Repository.Name</span>
+                <Badge Color="@GetStatusBadgeColor()" Class="ms-2">@Repository.SyncStatus</Badge>
+            </div>
+            <div>
+                <Switch @bind-Value="Repository.IsEnabled" ShowLabel="false" DisplayText="@Localizer["Enabled"]" 
+                        OnValueChanged="OnEnabledChanged" />
+                <Button Color="Color.Info" Size="Size.Small" Icon="fa-solid fa-pen" Text="@Localizer["Edit"]" 
+                        Class="ms-2" OnClick="ToggleEditMode" />
+            </div>
+        </div>
+    </HeaderTemplate>
+    <BodyTemplate>
+        @if (IsEditMode)
+        {
+            <ValidateForm Model="@Repository" OnValidSubmit="OnSave">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <BootstrapInput @bind-Value="Repository.Name" DisplayText="@Localizer["Name"]" />
+                    </div>
+                    <div class="col-12">
+                        <BootstrapInput @bind-Value="Repository.Url" DisplayText="@Localizer["RepositoryUrl"]" />
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <BootstrapInput @bind-Value="Repository.LocalPath" DisplayText="@Localizer["LocalPath"]" />
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <BootstrapInput @bind-Value="Repository.OutputDir" DisplayText="@Localizer["OutputDir"]" />
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <BootstrapInput @bind-Value="Repository.CronSchedule" DisplayText="@Localizer["CronSchedule"]" />
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <BootstrapInput @bind-Value="Repository.TargetFramework" DisplayText="@Localizer["TargetFramework"]" />
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <Select @bind-Value="Repository.Provider" DisplayText="@Localizer["Provider"]">
+                            <SelectOptions>
+                                <SelectOption Text="GitHub" Value="GitHub" />
+                                <SelectOption Text="Gitee" Value="Gitee" />
+                                <SelectOption Text="GitLab" Value="GitLab" />
+                                <SelectOption Text="Other" Value="Other" />
+                            </SelectOptions>
+                        </Select>
+                    </div>
+                    
+                    <Divider Text="@Localizer["SyncStatus"]" />
+                    
+                    <div class="col-12">
+                        <Display @bind-Value="Repository.LastSyncAt" DisplayText="@Localizer["LastSync"]" />
+                    </div>
+                    @if (!string.IsNullOrEmpty(Repository.LastSyncError))
+                    {
+                        <div class="col-12">
+                            <Alert Color="Color.Danger" Icon="fa-solid fa-circle-exclamation">
+                                <ChildContent>@Localizer["LastError"]: @Repository.LastSyncError</ChildContent>
+                            </Alert>
+                        </div>
+                    }
+                    
+                    <div class="col-12 text-end mt-3">
+                        <Button Color="Color.Secondary" Text="@Localizer["Cancel"]" Class="me-2" OnClick="ToggleEditMode" />
+                        <Button Color="Color.Primary" Icon="fa-solid fa-save" Text="@Localizer["Save"]" ButtonType="ButtonType.Submit" />
+                    </div>
+                </div>
+            </ValidateForm>
+            
+            @* Delete button outside the form to prevent accidental deletion *@
+            <div class="col-12 text-end mt-2">
+                <Button Color="Color.Danger" Icon="fa-solid fa-trash" Text="@Localizer["Delete"]" OnClick="OnDelete" />
+            </div>
+        }
+        else
+        {
+            <div class="row">
+                <div class="col-md-6">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">@Localizer["RepositoryUrl"]:</dt>
+                        <dd class="col-sm-8">@Repository.Url</dd>
+                        
+                        <dt class="col-sm-4">@Localizer["LocalPath"]:</dt>
+                        <dd class="col-sm-8">@Repository.LocalPath</dd>
+                        
+                        <dt class="col-sm-4">@Localizer["OutputDir"]:</dt>
+                        <dd class="col-sm-8">@Repository.OutputDir</dd>
+                    </dl>
+                </div>
+                <div class="col-md-6">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">@Localizer["CronSchedule"]:</dt>
+                        <dd class="col-sm-8"><code>@Repository.CronSchedule</code></dd>
+                        
+                        <dt class="col-sm-4">@Localizer["TargetFramework"]:</dt>
+                        <dd class="col-sm-8"><code>@(Repository.TargetFramework ?? "net10.0")</code></dd>
+                        
+                        <dt class="col-sm-4">@Localizer["LastSync"]:</dt>
+                        <dd class="col-sm-8">@(Repository.LastSyncAt?.ToLocalTime().ToString("g") ?? Localizer!["Never"])</dd>
+                        
+                        <dt class="col-sm-4">@Localizer["Status"]:</dt>
+                        <dd class="col-sm-8">
+                            <Badge Color="@GetStatusBadgeColor()">@Repository.SyncStatus</Badge>
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        }
+    </BodyTemplate>
+</Card>
+
+@code {
+    [Parameter]
+    public RepositoryInfo Repository { get; set; } = new();
+
+    [Parameter]
+    public EventCallback OnRepositoryChanged { get; set; }
+
+    [Inject]
+    private IStringLocalizer<RepositoryCard>? Localizer { get; set; }
+
+    private bool IsEditMode { get; set; } = false;
+
+    private void ToggleEditMode()
+    {
+        IsEditMode = !IsEditMode;
+    }
+
+    private async Task OnSave(EditContext editContext)
+    {
+        var success = RepositoryManager.UpdateRepository(Repository);
+        if (success)
+        {
+            ToastService.Success(Localizer?["SaveSuccess"] ?? "Success", 
+                Localizer?["SaveSuccessDesc"] ?? "Repository updated successfully");
+            IsEditMode = false;
+            await OnRepositoryChanged.InvokeAsync();
+        }
+        else
+        {
+            ToastService.Error(Localizer?["SaveFailed"] ?? "Error", 
+                Localizer?["SaveFailedDesc"] ?? "Failed to update repository");
+        }
+    }
+
+    private async Task OnDelete()
+    {
+        // Show confirmation dialog before deleting
+        var result = await SwalService.ShowModal(new SwalOption
+        {
+            Title = Localizer?["ConfirmDelete"] ?? "Confirm Delete",
+            Content = string.Format(Localizer?["ConfirmDeleteMessage"] ?? "Are you sure you want to delete '{0}'? This action cannot be undone.", Repository.Name),
+            IsConfirm = true,
+            ButtonText = Localizer?["Delete"] ?? "Delete",
+            ButtonColor = Color.Danger
+        });
+        
+        if (result)
+        {
+            var success = RepositoryManager.DeleteRepository(Repository.Id);
+            if (success)
+            {
+                ToastService.Success(Localizer?["DeleteSuccess"] ?? "Deleted", 
+                    Localizer?["DeleteSuccessDesc"] ?? "Repository deleted successfully");
+                await OnRepositoryChanged.InvokeAsync();
+            }
+            else
+            {
+                ToastService.Error(Localizer?["DeleteFailed"] ?? "Error", 
+                    Localizer?["DeleteFailedDesc"] ?? "Failed to delete repository");
+            }
+        }
+    }
+
+    private async Task OnEnabledChanged(bool enabled)
+    {
+        Repository.IsEnabled = enabled;
+        RepositoryManager.UpdateRepository(Repository);
+        await OnRepositoryChanged.InvokeAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private string GetProviderIcon()
+    {
+        return Repository.Provider switch
+        {
+            GitProvider.GitHub => "fa-brands fa-github",
+            GitProvider.Gitee => "fa-solid fa-code-branch",
+            GitProvider.GitLab => "fa-brands fa-gitlab",
+            _ => "fa-solid fa-git"
+        };
+    }
+
+    private Color GetStatusBadgeColor()
+    {
+        return Repository.SyncStatus switch
+        {
+            SyncStatus.NeverRun => Color.Secondary,
+            SyncStatus.Running => Color.Info,
+            SyncStatus.Success => Color.Success,
+            SyncStatus.Failed => Color.Danger,
+            _ => Color.Secondary
+        };
+    }
+}

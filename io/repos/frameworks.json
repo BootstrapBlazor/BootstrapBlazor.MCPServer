@@ -1,0 +1,195 @@
+{
+  "$schema": "./metadata-schema.json",
+  "frameworks": {
+    "BlazorComponent": {
+      "id": "blazor-component",
+      "name": "Blazor Component Library",
+      "description": "For extracting and processing Blazor component libraries with parameter definitions and samples",
+      "frameworkCompatibility": {
+        "primaryFramework": "Blazor",
+        "frameworkVersions": ["net8.0", "net9.0", "net10.0"],
+        "language": "C#",
+        "minDotNetVersion": "net8.0"
+      },
+      "extractionConfig": {
+        "extractorType": "BlazorComponent",
+        "buildCommand": "dotnet build",
+        "xmlDocsPath": "*.xml",
+        "samplesPath": "Components/Samples",
+        "localizationPath": "Locales",
+        "apiOutputFormat": "markdown",
+        "componentNamespace": "Components"
+      },
+      "aiModelCapabilities": {
+        "supportedModels": ["gpt-4o", "gpt-4o-mini", "claude-3.5-sonnet"],
+        "recommendedModel": "gpt-4o",
+        "requiresVision": false,
+        "requiresFunctionCalling": false,
+        "contextWindow": 128000,
+        "optimalTemperature": 0.3,
+        "maxTokens": 4096
+      },
+      "intendedUseCases": {
+        "primaryUseCase": "UI Components",
+        "secondaryUseCases": ["Component Development", "Integration Guides", "API Reference"],
+        "targetAudience": ["Developers"],
+        "difficultyLevel": "Intermediate"
+      },
+      "integrationRequirements": {
+        "requiredPackages": [
+          { "id": "Microsoft.AspNetCore.Components", "version": "8.0.0", "purpose": "Core Blazor components" }
+        ]
+      },
+      "promptTemplates": {
+        "systemPrompt": "You are a senior {{framework}} expert. The user is asking about the component '{{componentName}}'.",
+        "componentQueryTemplate": "What are the parameters available for the {{componentName}} component?",
+        "expertQueryTemplate": "Based on the API documentation and code samples provided, answer the user's question about {{componentName}}: {{question}}"
+      },
+      "constraints": {
+        "excludedPaths": ["bin", "obj", "node_modules", ".git"],
+        "excludedFilePatterns": ["*.min.js", "*.d.ts", "*.map"],
+        "requiresNetwork": true
+      },
+      "requiredSettings": [
+        { "name": "RepositoryUrl", "type": "string", "description": "Git repository URL", "required": true },
+        { "name": "LocalPath", "type": "string", "description": "Local clone directory path", "required": true },
+        { "name": "OutputDir", "type": "string", "description": "RAG output directory", "required": true },
+        { "name": "BuildProjectPath", "type": "string", "description": "Relative path to .csproj", "required": false }
+      ]
+    },
+    "DotNetLibrary": {
+      "id": "dotnet-library",
+      "name": ".NET Class Library",
+      "description": "For extracting and processing .NET class libraries with public API and XML documentation",
+      "frameworkCompatibility": {
+        "primaryFramework": ".NET",
+        "frameworkVersions": ["net8.0", "net9.0", "net10.0", "netstandard2.0", "netstandard2.1"],
+        "language": "C#",
+        "minDotNetVersion": "netstandard2.0"
+      },
+      "extractionConfig": {
+        "extractorType": "DotNetLibrary",
+        "buildCommand": "dotnet build",
+        "xmlDocsPath": "*.xml",
+        "apiOutputFormat": "markdown"
+      },
+      "aiModelCapabilities": {
+        "supportedModels": ["gpt-4o", "gpt-4o-mini", "claude-3.5-sonnet"],
+        "recommendedModel": "gpt-4o",
+        "requiresVision": false,
+        "requiresFunctionCalling": false,
+        "contextWindow": 128000,
+        "optimalTemperature": 0.2,
+        "maxTokens": 4096
+      },
+      "intendedUseCases": {
+        "primaryUseCase": "API & Services",
+        "secondaryUseCases": ["Library Development", "SDK Usage", "API Reference"],
+        "targetAudience": ["Developers"],
+        "difficultyLevel": "Intermediate"
+      },
+      "integrationRequirements": {
+        "requiredPackages": []
+      },
+      "promptTemplates": {
+        "systemPrompt": "You are a senior .NET expert. Help users understand and use the {{className}} class from the {{repositoryName}} library.",
+        "componentQueryTemplate": "What are the public methods and properties available in the {{className}} class?"
+      },
+      "constraints": {
+        "excludedPaths": ["bin", "obj", "node_modules", ".git"],
+        "excludedFilePatterns": ["*.min.js", "*.d.ts"],
+        "requiresNetwork": true
+      }
+    },
+    "MarkdownDocs": {
+      "id": "markdown-docs",
+      "name": "Markdown Documentation",
+      "description": "For extracting and processing markdown-based documentation repositories",
+      "frameworkCompatibility": {
+        "primaryFramework": "Documentation",
+        "frameworkVersions": [],
+        "language": "Markdown"
+      },
+      "extractionConfig": {
+        "extractorType": "MarkdownDocs",
+        "docsPath": "docs",
+        "apiOutputFormat": "markdown"
+      },
+      "aiModelCapabilities": {
+        "supportedModels": ["gpt-4o", "gpt-4o-mini", "claude-3.5-sonnet", "gemini-2.0-flash"],
+        "recommendedModel": "gpt-4o-mini",
+        "requiresVision": false,
+        "requiresFunctionCalling": false,
+        "contextWindow": 128000,
+        "optimalTemperature": 0.1,
+        "maxTokens": 8192
+      },
+      "intendedUseCases": {
+        "primaryUseCase": "Documentation",
+        "secondaryUseCases": ["Tutorials", "Guides", "API Reference"],
+        "targetAudience": ["Developers", "Beginners"],
+        "difficultyLevel": "Beginner"
+      },
+      "integrationRequirements": {
+        "requiredPackages": []
+      },
+      "promptTemplates": {
+        "systemPrompt": "You are a documentation expert for {{repositoryName}}. Help users find and understand the documentation.",
+        "componentQueryTemplate": "Find documentation related to {{topic}}"
+      },
+      "constraints": {
+        "excludedPaths": [".git", "node_modules"],
+        "excludedFilePatterns": ["*.json", "*.yaml", "*.yml"],
+        "requiresNetwork": true
+      }
+    },
+    "CustomScript": {
+      "id": "custom-script",
+      "name": "Custom Extraction Script",
+      "description": "For repositories requiring custom extraction logic via user-defined scripts",
+      "frameworkCompatibility": {
+        "primaryFramework": "Custom",
+        "frameworkVersions": [],
+        "language": "Any"
+      },
+      "extractionConfig": {
+        "extractorType": "CustomScript",
+        "customExtractorCommand": ""
+      },
+      "aiModelCapabilities": {
+        "supportedModels": ["gpt-4o", "gpt-4o-mini", "claude-3.5-sonnet"],
+        "recommendedModel": "gpt-4o",
+        "requiresVision": false,
+        "requiresFunctionCalling": true,
+        "contextWindow": 128000,
+        "optimalTemperature": 0.3,
+        "maxTokens": 4096
+      },
+      "intendedUseCases": {
+        "primaryUseCase": "Utilities",
+        "secondaryUseCases": ["Custom Processing", "Specialized Extraction"],
+        "targetAudience": ["Developers", "Advanced Users"],
+        "difficultyLevel": "Advanced"
+      },
+      "integrationRequirements": {
+        "requiredPackages": []
+      },
+      "promptTemplates": {
+        "systemPrompt": "You are an expert assistant for {{repositoryName}}. Use the custom extraction logic to answer user questions."
+      },
+      "constraints": {
+        "excludedPaths": [],
+        "excludedFilePatterns": [],
+        "requiresNetwork": true
+      },
+      "requiredSettings": [
+        { "name": "CustomExtractorCommand", "type": "string", "description": "Custom command to run for extraction", "required": true }
+      ]
+    }
+  },
+  "metadata": {
+    "schemaVersion": "1.0.0",
+    "lastUpdated": "2026-03-10T00:00:00Z",
+    "description": "Framework configuration mappings for MCP repository extraction"
+  }
+}

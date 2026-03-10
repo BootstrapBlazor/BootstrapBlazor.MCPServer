@@ -1,0 +1,148 @@
+{
+  "$schema": "./metadata-schema.json",
+  "id": "",
+  "name": "",
+  "slug": "",
+  "description": "",
+  "url": "",
+  "provider": "GitHub",
+  "frameworkCompatibility": {
+    "primaryFramework": "",
+    "frameworkVersions": [],
+    "language": "C#",
+    "minDotNetVersion": ""
+  },
+  "aiModelCapabilities": {
+    "supportedModels": ["gpt-4o", "gpt-4o-mini", "claude-3.5-sonnet"],
+    "recommendedModel": "gpt-4o",
+    "requiresVision": false,
+    "requiresFunctionCalling": false,
+    "contextWindow": 128000,
+    "optimalTemperature": 0.3,
+    "maxTokens": 4096
+  },
+  "intendedUseCases": {
+    "primaryUseCase": "",
+    "secondaryUseCases": [],
+    "targetAudience": ["Developers"],
+    "difficultyLevel": "Intermediate"
+  },
+  "configurationParameters": {
+    "requiredSettings": [
+      {
+        "name": "RepositoryUrl",
+        "type": "string",
+        "description": "Git repository URL",
+        "required": true
+      },
+      {
+        "name": "LocalPath",
+        "type": "string",
+        "description": "Local clone directory path",
+        "required": true
+      },
+      {
+        "name": "OutputDir",
+        "type": "string",
+        "description": "RAG output directory for extracted documentation",
+        "required": true
+      }
+    ],
+    "optionalSettings": [
+      {
+        "name": "CronSchedule",
+        "type": "string",
+        "description": "Cron schedule for repository sync",
+        "defaultValue": "0 */4 * * *",
+        "required": false
+      },
+      {
+        "name": "TargetFramework",
+        "type": "string",
+        "description": "Target .NET framework version",
+        "required": false
+      }
+    ],
+    "environmentVariables": []
+  },
+  "integrationRequirements": {
+    "requiredPackages": [],
+    "requiredServices": [],
+    "middlewareRequirements": [],
+    "databaseRequirements": [],
+    "externalDependencies": []
+  },
+  "extractionConfig": {
+    "extractorType": "AutoDetect",
+    "buildCommand": "dotnet build",
+    "buildProjectPath": "",
+    "dllName": "",
+    "xmlDocsPath": "",
+    "docsPath": "",
+    "samplesPath": "",
+    "localizationPath": "",
+    "apiOutputFormat": "markdown",
+    "componentNamespace": ""
+  },
+  "constraints": {
+    "maxFileSize": 10485760,
+    "excludedPaths": ["bin", "obj", "node_modules", ".git"],
+    "excludedFilePatterns": ["*.min.js", "*.d.ts", "*.map"],
+    "rateLimits": {
+      "maxRequestsPerMinute": 60,
+      "maxConcurrentOperations": 4
+    },
+    "licensing": "",
+    "requiresNetwork": true
+  },
+  "versionInfo": {
+    "metadataVersion": "1.0.0",
+    "repositoryVersion": "",
+    "lastUpdated": "2026-03-10T00:00:00Z",
+    "compatibleWith": ["1.0.0"]
+  },
+  "dependencyRelationships": {
+    "dependsOn": [],
+    "relatedRepositories": [],
+    "parentRepository": null
+  },
+  "usagePattern": {
+    "recommendedWorkflow": [
+      "1. Clone the repository to local path",
+      "2. Build the project to generate XML documentation (if applicable)",
+      "3. Run extraction to generate RAG-ready markdown files",
+      "4. Query components using MCP tools"
+    ],
+    "bestPractices": [
+      "Check if component has been built before extraction",
+      "Use the component name exactly as it appears in API docs",
+      "Enable AI integration for natural language queries",
+      "Schedule regular syncs to keep documentation up to date"
+    ],
+    "commonPitfalls": [
+      "Forgetting to build the project before extraction",
+      "Using incorrect component names (case-sensitive)",
+      "Not enabling AI integration for expert queries"
+    ],
+    "examplePrompts": []
+  },
+  "promptTemplates": {
+    "systemPrompt": "You are a senior {{framework}} expert. The user is asking a question about the component '{{componentName}}'.\nHere is the official API parameter documentation for this component:\n=== API START ===\n{{apiContent}}\n=== API END ===\n\nHere are the official code samples for this component:\n=== SAMPLES START ===\n{{sampleContent}}\n=== SAMPLES END ===\n\nBased strictly on the API and examples provided above, please answer the user's question clearly and concisely.\nIf writing code, ensure you use the exact parameter names listed in the API table.",
+    "componentQueryTemplate": "What are the parameters available for the {{componentName}} component?",
+    "searchTemplate": "Search for components matching: {{keyword}}",
+    "docsTemplate": "# Component: {{componentName}}\n\n## API\n{{apiContent}}\n\n## Samples\n{{sampleContent}}",
+    "expertQueryTemplate": "Based on the API documentation and code samples provided, answer the user's question about {{componentName}}: {{question}}",
+    "variables": {
+      "framework": "",
+      "componentName": "",
+      "apiContent": "",
+      "sampleContent": ""
+    }
+  },
+  "metadata": {
+    "version": "1.0.0",
+    "lastUpdated": "2026-03-10T00:00:00Z",
+    "author": "",
+    "description": "Template for new repository configurations"
+  }
+}

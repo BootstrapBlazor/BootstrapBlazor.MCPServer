@@ -16,6 +16,17 @@
     <PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="10.3.0" />
     <PackageReference Include="ModelContextProtocol" Version="0.9.0-preview.2" />
     <PackageReference Include="ModelContextProtocol.AspNetCore" Version="0.9.0-preview.2" />
+    <PackageReference Include="Serilog" Version="4.1.0" />
+    <PackageReference Include="Serilog.Extensions.Logging" Version="8.0.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
+    <PackageReference Include="Serilog.Formatting.Compact" Version="3.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="tests\**" />
+    <Content Remove="tests\**" />
+    <EmbeddedResource Remove="tests\**" />
+    <None Remove="tests\**" />
   </ItemGroup>
 
 </Project>

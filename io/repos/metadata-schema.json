@@ -1,0 +1,524 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mcp-server.io/schemas/repository-metadata.schema.json",
+  "title": "MCP Repository Metadata Schema",
+  "description": "Comprehensive metadata schema for MCP repository configuration, enabling AI models to intelligently select and configure repositories for AI Mode processing",
+  "version": "1.0.0",
+  "type": "object",
+  "definitions": {
+    "frameworkCompatibility": {
+      "type": "object",
+      "description": "Framework compatibility and version requirements",
+      "properties": {
+        "primaryFramework": {
+          "type": "string",
+          "description": "Primary framework (e.g., Blazor, ASP.NET Core, WPF)",
+          "examples": ["Blazor", "ASP.NET Core", "WPF", "WinForms", "MAUI"]
+        },
+        "frameworkVersions": {
+          "type": "array",
+          "description": "Supported framework versions",
+          "items": {
+            "type": "string",
+            "examples": ["net8.0", "net9.0", "net10.0"]
+          }
+        },
+        "language": {
+          "type": "string",
+          "description": "Programming language",
+          "default": "C#",
+          "enum": ["C#", "F#", "VB.NET", "JavaScript", "TypeScript", "Python", "Go", "Rust", "Java", "Kotlin"]
+        },
+        "minDotNetVersion": {
+          "type": "string",
+          "description": "Minimum .NET version required",
+          "pattern": "^net\\d+\\.\\d+$"
+        }
+      },
+      "required": ["primaryFramework"]
+    },
+    "aiModelCapabilities": {
+      "type": "object",
+      "description": "AI model capabilities and requirements",
+      "properties": {
+        "supportedModels": {
+          "type": "array",
+          "description": "List of compatible AI models",
+          "items": {
+            "type": "string",
+            "examples": ["gpt-4o", "gpt-4o-mini", "claude-3.5-sonnet", "gemini-2.0-flash"]
+          }
+        },
+        "recommendedModel": {
+          "type": "string",
+          "description": "Recommended model for best results"
+        },
+        "requiresVision": {
+          "type": "boolean",
+          "description": "Whether the model needs vision capabilities",
+          "default": false
+        },
+        "requiresFunctionCalling": {
+          "type": "boolean",
+          "description": "Whether function calling is required",
+          "default": false
+        },
+        "contextWindow": {
+          "type": "integer",
+          "description": "Minimum context window size in tokens",
+          "minimum": 8000
+        },
+        "optimalTemperature": {
+          "type": "number",
+          "description": "Optimal temperature setting for this repository",
+          "minimum": 0,
+          "maximum": 2,
+          "default": 0.3
+        },
+        "maxTokens": {
+          "type": "integer",
+          "description": "Maximum response tokens",
+          "minimum": 1000
+        }
+      }
+    },
+    "intendedUseCases": {
+      "type": "object",
+      "description": "Intended use cases and scenarios",
+      "properties": {
+        "primaryUseCase": {
+          "type": "string",
+          "description": "Primary use case category",
+          "enum": ["UI Components", "Charts & Visualization", "Data & Storage", "Authentication", "API & Services", "Utilities", "Documentation", "Templates", "Learning Resources"]
+        },
+        "secondaryUseCases": {
+          "type": "array",
+          "description": "Additional use cases",
+          "items": {
+            "type": "string"
+          }
+        },
+        "targetAudience": {
+          "type": "array",
+          "description": "Target audience",
+          "items": {
+            "type": "string",
+            "examples": ["Developers", "Beginners", "Enterprise", "Open Source Contributors"]
+          }
+        },
+        "difficultyLevel": {
+          "type": "string",
+          "description": "Difficulty level for users",
+          "enum": ["Beginner", "Intermediate", "Advanced", "Expert"]
+        }
+      },
+      "required": ["primaryUseCase"]
+    },
+    "configurationParameters": {
+      "type": "object",
+      "description": "Configuration parameters required for this repository",
+      "properties": {
+        "requiredSettings": {
+          "type": "array",
+          "description": "Required configuration settings",
+          "items": {
+            "$ref": "#/definitions/configurationSetting"
+          }
+        },
+        "optionalSettings": {
+          "type": "array",
+          "description": "Optional configuration settings",
+          "items": {
+            "$ref": "#/definitions/configurationSetting"
+          }
+        },
+        "environmentVariables": {
+          "type": "array",
+          "description": "Required environment variables",
+          "items": {
+            "$ref": "#/definitions/environmentVariable"
+          }
+        }
+      }
+    },
+    "configurationSetting": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Configuration setting name"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["string", "boolean", "integer", "number", "array", "object"]
+        },
+        "description": {
+          "type": "string"
+        },
+        "defaultValue": {
+          "description": "Default value if not specified"
+        },
+        "required": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "required": ["name", "type", "description"]
+    },
+    "environmentVariable": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean",
+          "default": false
+        },
+        "example": {
+          "type": "string"
+        }
+      },
+      "required": ["name", "description"]
+    },
+    "integrationRequirements": {
+      "type": "object",
+      "description": "Integration requirements and dependencies",
+      "properties": {
+        "requiredPackages": {
+          "type": "array",
+          "description": "Required NuGet packages",
+          "items": {
+            "$ref": "#/definitions/packageReference"
+          }
+        },
+        "requiredServices": {
+          "type": "array",
+          "description": "Required services to be registered",
+          "items": {
+            "type": "string"
+          }
+        },
+        "middlewareRequirements": {
+          "type": "array",
+          "description": "Required middleware components",
+          "items": {
+            "type": "string"
+          }
+        },
+        "databaseRequirements": {
+          "type": "array",
+          "description": "Database requirements",
+          "items": {
+            "type": "string",
+            "enum": ["SQLite", "SQL Server", "PostgreSQL", "MySQL", "MongoDB", "Redis", "None"]
+          }
+        },
+        "externalDependencies": {
+          "type": "array",
+          "description": "External service dependencies",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "packageReference": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Package ID"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version or version range"
+        },
+        "purpose": {
+          "type": "string",
+          "description": "Why this package is needed"
+        }
+      },
+      "required": ["id", "version"]
+    },
+    "extractionConfig": {
+      "type": "object",
+      "description": "Documentation extraction configuration",
+      "properties": {
+        "extractorType": {
+          "type": "string",
+          "enum": ["AutoDetect", "BlazorComponent", "DotNetLibrary", "MarkdownDocs", "CustomScript"],
+          "description": "Type of extractor to use"
+        },
+        "buildCommand": {
+          "type": "string",
+          "description": "Build command (default: dotnet build)",
+          "default": "dotnet build"
+        },
+        "buildProjectPath": {
+          "type": "string",
+          "description": "Relative path to .csproj file"
+        },
+        "dllName": {
+          "type": "string",
+          "description": "Custom DLL name if non-standard"
+        },
+        "xmlDocsPath": {
+          "type": "string",
+          "description": "Path to XML documentation file"
+        },
+        "docsPath": {
+          "type": "string",
+          "description": "Custom docs folder path"
+        },
+        "samplesPath": {
+          "type": "string",
+          "description": "Path to samples directory"
+        },
+        "localizationPath": {
+          "type": "string",
+          "description": "Path to localization files"
+        },
+        "customExtractorCommand": {
+          "type": "string",
+          "description": "Custom extractor command for advanced use"
+        },
+        "apiOutputFormat": {
+          "type": "string",
+          "description": "API documentation output format",
+          "enum": ["markdown", "json", "xml"],
+          "default": "markdown"
+        },
+        "componentNamespace": {
+          "type": "string",
+          "description": "Component namespace to extract (for Blazor components)"
+        }
+      }
+    },
+    "constraints": {
+      "type": "object",
+      "description": "Constraints and considerations for AI Mode processing",
+      "properties": {
+        "maxFileSize": {
+          "type": "integer",
+          "description": "Maximum file size in bytes to process",
+          "minimum": 0
+        },
+        "excludedPaths": {
+          "type": "array",
+          "description": "Paths to exclude from processing",
+          "items": {
+            "type": "string"
+          }
+        },
+        "excludedFilePatterns": {
+          "type": "array",
+          "description": "File patterns to exclude",
+          "items": {
+            "type": "string",
+            "examples": ["*.min.js", "*.d.ts", "node_modules/**", "bin/**", "obj/**"]
+          }
+        },
+        "rateLimits": {
+          "type": "object",
+          "description": "Rate limiting constraints",
+          "properties": {
+            "maxRequestsPerMinute": {
+              "type": "integer"
+            },
+            "maxConcurrentOperations": {
+              "type": "integer"
+            }
+          }
+        },
+        "licensing": {
+          "type": "string",
+          "description": "License type",
+          "examples": ["MIT", "Apache-2.0", "GPL-3.0", "Proprietary", "Free"]
+        },
+        "requiresNetwork": {
+          "type": "boolean",
+          "description": "Whether this repository requires network access",
+          "default": true
+        }
+      }
+    },
+    "versionInfo": {
+      "type": "object",
+      "description": "Version information for the repository metadata",
+      "properties": {
+        "metadataVersion": {
+          "type": "string",
+          "description": "Version of this metadata schema"
+        },
+        "repositoryVersion": {
+          "type": "string",
+          "description": "Version of the target repository"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last metadata update timestamp"
+        },
+        "compatibleWith": {
+          "type": "array",
+          "description": "Compatible MCP server versions",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": ["metadataVersion", "repositoryVersion"]
+    },
+    "dependencyRelationships": {
+      "type": "object",
+      "description": "Dependency relationships with other repositories",
+      "properties": {
+        "dependsOn": {
+          "type": "array",
+          "description": "Repositories this repository depends on",
+          "items": {
+            "type": "string"
+          }
+        },
+        "relatedRepositories": {
+          "type": "array",
+          "description": "Related repositories that may be useful together",
+          "items": {
+            "type": "string"
+          }
+        },
+        "parentRepository": {
+          "type": "string",
+          "description": "Parent repository if this is a fork or submodule"
+        }
+      }
+    },
+    "usagePattern": {
+      "type": "object",
+      "description": "Recommended usage patterns for AI Mode",
+      "properties": {
+        "recommendedWorkflow": {
+          "type": "array",
+          "description": "Recommended workflow steps",
+          "items": {
+            "type": "string"
+          }
+        },
+        "bestPractices": {
+          "type": "array",
+          "description": "Best practices for using this repository",
+          "items": {
+            "type": "string"
+          }
+        },
+        "commonPitfalls": {
+          "type": "array",
+          "description": "Common pitfalls to avoid",
+          "items": {
+            "type": "string"
+          }
+        },
+        "examplePrompts": {
+          "type": "array",
+          "description": "Example prompts that work well with this repository",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "promptTemplates": {
+      "type": "object",
+      "description": "AI prompt templates for different operations",
+      "properties": {
+        "systemPrompt": {
+          "type": "string",
+          "description": "System prompt template for AI interactions"
+        },
+        "componentQueryTemplate": {
+          "type": "string",
+          "description": "Template for querying component information"
+        },
+        "searchTemplate": {
+          "type": "string",
+          "description": "Template for searching components"
+        },
+        "docsTemplate": {
+          "type": "string",
+          "description": "Template for retrieving documentation"
+        },
+        "expertQueryTemplate": {
+          "type": "string",
+          "description": "Template for expert Q&A queries"
+        },
+        "variables": {
+          "type": "object",
+          "description": "Available template variables",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema reference"
+    },
+    "id": {
+      "type": "string",
+      "description": "Unique identifier for this repository configuration"
+    },
+    "name": {
+      "type": "string",
+      "description": "Repository display name"
+    },
+    "slug": {
+      "type": "string",
+      "description": "URL-safe identifier"
+    },
+    "description": {
+      "type": "string",
+      "description": "Repository description"
+    },
+    "frameworkCompatibility": {
+      "$ref": "#/definitions/frameworkCompatibility"
+    },
+    "aiModelCapabilities": {
+      "$ref": "#/definitions/aiModelCapabilities"
+    },
+    "intendedUseCases": {
+      "$ref": "#/definitions/intendedUseCases"
+    },
+    "configurationParameters": {
+      "$ref": "#/definitions/configurationParameters"
+    },
+    "integrationRequirements": {
+      "$ref": "#/definitions/integrationRequirements"
+    },
+    "extractionConfig": {
+      "$ref": "#/definitions/extractionConfig"
+    },
+    "constraints": {
+      "$ref": "#/definitions/constraints"
+    },
+    "versionInfo": {
+      "$ref": "#/definitions/versionInfo"
+    },
+    "dependencyRelationships": {
+      "$ref": "#/definitions/dependencyRelationships"
+    },
+    "usagePattern": {
+      "$ref": "#/definitions/usagePattern"
+    },
+    "promptTemplates": {
+      "$ref": "#/definitions/promptTemplates"
+    }
+  },
+  "required": ["id", "name", "slug", "frameworkCompatibility", "versionInfo"]
+}

@@ -1,0 +1,117 @@
+{
+  "$schema": "./metadata-schema.json",
+  "promptTemplates": {
+    "version": "1.0.0",
+    "templates": {
+      "systemPrompt": {
+        "description": "Default system prompt for AI interactions",
+        "template": "You are a senior {{framework}} expert. The user is asking a question about the component '{{componentName}}'.\nHere is the official API parameter documentation for this component:\n=== API START ===\n{{apiContent}}\n=== API END ===\n\nHere are the official code samples for this component:\n=== SAMPLES START ===\n{{sampleContent}}\n=== SAMPLES END ===\n\nBased strictly on the API and examples provided above, please answer the user's question clearly and concisely.\nIf writing code, ensure you use the exact parameter names listed in the API table.",
+        "variables": {
+          "framework": "Framework name (e.g., Blazor, ASP.NET Core)",
+          "componentName": "Name of the component",
+          "apiContent": "API parameter documentation",
+          "sampleContent": "Code samples"
+        }
+      },
+      "componentList": {
+        "description": "Template for listing all available components",
+        "template": "List all available components in this repository.",
+        "variables": {}
+      },
+      "componentSearch": {
+        "description": "Template for searching components by keyword",
+        "template": "Search for components that match the keyword: {{keyword}}",
+        "variables": {
+          "keyword": "Search keyword"
+        }
+      },
+      "componentDocs": {
+        "description": "Template for retrieving component documentation",
+        "template": "# Component: {{componentName}}\n\n## API\n{{apiContent}}\n\n## Samples\n{{sampleContent}}",
+        "variables": {
+          "componentName": "Name of the component",
+          "apiContent": "API parameter documentation",
+          "sampleContent": "Code samples"
+        }
+      },
+      "expertQuery": {
+        "description": "Template for asking expert questions about a component",
+        "template": "{{systemPrompt}}\n\nUser's question: {{question}}",
+        "variables": {
+          "systemPrompt": "System prompt with context",
+          "question": "User's question"
+        }
+      },
+      "repositoryInfo": {
+        "description": "Template for retrieving repository information",
+        "template": "Provide detailed information about the {{repositoryName}} repository including:\n- Description\n- Target framework\n- Key components\n- Usage examples",
+        "variables": {
+          "repositoryName": "Name of the repository"
+        }
+      }
+    },
+    "frameworkOverrides": {
+      "Blazor": {
+        "systemPrompt": "You are a senior Blazor expert. The user is asking a question about the component '{{componentName}}'.\nHere is the official API parameter documentation for this component:\n=== API START ===\n{{apiContent}}\n=== API END ===\n\nHere are the official code samples for this component:\n=== SAMPLES START ===\n{{sampleContent}}\n=== SAMPLES END ===\n\nBased strictly on the API and examples provided above (and your general Blazor knowledge), please answer the user's question clearly and concisely.\nIf writing code, ensure you use the exact parameter names listed in the API table."
+      },
+      "ASP.NET Core": {
+        "systemPrompt": "You are a senior ASP.NET Core expert. The user is asking about '{{componentName}}'.\nHere is the official API documentation:\n=== API START ===\n{{apiContent}}\n=== API END ===\n\nHere are the official usage examples:\n=== EXAMPLES START ===\n{{sampleContent}}\n=== EXAMPLES END ===\n\nBased strictly on the API and examples provided above, please answer the user's question clearly and concisely."
+      },
+      "WPF": {
+        "systemPrompt": "You are a senior WPF (Windows Presentation Foundation) expert. The user is asking about the {{componentName}} control.\nHere is the official API documentation:\n=== API START ===\n{{apiContent}}\n=== API END ===\n\nHere are the official XAML and C# examples:\n=== EXAMPLES START ===\n{{sampleContent}}\n=== EXAMPLES END ===\n\nPlease answer the user's question based strictly on the provided API and examples."
+      },
+      "WinForms": {
+        "systemPrompt": "You are a senior Windows Forms expert. The user is asking about the {{componentName}} control.\nHere is the official API documentation:\n=== API START ===\n{{apiContent}}\n=== API END ===\n\nHere are the official usage examples:\n=== EXAMPLES START ===\n{{sampleContent}}\n=== EXAMPLES END ===\n\nPlease answer the user's question based strictly on the provided API and examples."
+      },
+      "MAUI": {
+        "systemPrompt": "You are a senior .NET MAUI expert. The user is asking about the {{componentName}} component.\nHere is the official API documentation:\n=== API START ===\n{{apiContent}}\n=== API END ===\n\nHere are the official XAML and C# examples:\n=== EXAMPLES START ===\n{{sampleContent}}\n=== EXAMPLES END ===\n\nPlease answer the user's question based strictly on the provided API and examples."
+      },
+      "Documentation": {
+        "systemPrompt": "You are a documentation expert for {{repositoryName}}. Help users find and understand the documentation.\n\nThe user is asking about: {{componentName}}\n\nRelevant documentation:\n=== DOCS START ===\n{{apiContent}}\n=== DOCS END ===\n\nPlease provide a clear and helpful answer based on the documentation."
+      }
+    },
+    "responseFormats": {
+      "componentDocs": {
+        "format": "markdown",
+        "template": "# Component: {{componentName}}\n\n## API\n{{apiContent}}\n\n## Samples\n{{sampleContent}}"
+      },
+      "componentList": {
+        "format": "plain-text",
+        "template": "{{#each components}}\n- {{this}}\n{{/each}}"
+      },
+      "expertAnswer": {
+        "format": "markdown",
+        "template": "## Answer\n{{answer}}\n\n{{#if codeExample}}\n### Code Example\n```\n{{codeExample}}\n```\n{{/if}}"
+      }
+    },
+    "localization": {
+      "defaultLanguage": "en-US",
+      "supportedLanguages": ["en-US", "zh-CN"],
+      "labels": {
+        "en-US": {
+          "apiHeader": "API",
+          "samplesHeader": "Samples",
+          "parametersHeader": "Parameters",
+          "typeHeader": "Type",
+          "descriptionHeader": "Description",
+          "componentNotFound": "Component '{{componentName}}' not found in documentation.",
+          "noComponentsFound": "No components found matching the keyword '{{keyword}}'."
+        },
+        "zh-CN": {
+          "apiHeader": "API",
+          "samplesHeader": "示例",
+          "parametersHeader": "参数",
+          "typeHeader": "类型",
+          "descriptionHeader": "说明",
+          "componentNotFound": "未在文档中找到组件 '{{componentName}}'。",
+          "noComponentsFound": "未找到匹配关键字 '{{keyword}}' 的组件。"
+        }
+      }
+    }
+  },
+  "metadata": {
+    "version": "1.0.0",
+    "lastUpdated": "2026-03-10T00:00:00Z",
+    "description": "AI prompt templates for MCP server repository interactions"
+  }
+}

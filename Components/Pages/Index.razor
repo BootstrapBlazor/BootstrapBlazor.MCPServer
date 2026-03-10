@@ -3,9 +3,8 @@
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.Extensions.Localization
 @attribute [Authorize]
-@inject GitSyncInvocable GitSync
-@inject AppSettingsManager SettingsManager
-@inject IJSRuntime JSRuntime
+@inject RepositoryManager RepositoryManager
+@inject RepositoryService RepositoryService
 @inject IStringLocalizer<Index> Localizer
 
 <PageTitle>@Localizer["PageTitle"]</PageTitle>
@@ -21,9 +20,9 @@
                 <p class="text-muted mb-0">RAG Server running smoothly.</p>
                 <hr />
                 <div class="text-start fs-6">
-                    <div><b>@Localizer["Target"]:</b> @_settings.RepositoryUrl</div>
-                    <div><b>@Localizer["CronSchedule"]:</b> @_settings.CronSchedule</div>
-                    <div><b>OutputDir:</b> @_settings.OutputDir</div>
+                    <div><b>@Localizer["Repositories"]:</b> @_repositories.Count</div>
+                    <div><b>@Localizer["Enabled"]:</b> @_repositories.Count(r => r.IsEnabled)</div>
+                    <div><b>@Localizer["LastSync"]:</b> @GetLastSyncTime()</div>
                 </div>
             </BodyTemplate>
         </Card>
@@ -36,7 +35,16 @@
             </HeaderTemplate>
             <BodyTemplate>
                 <p>@Localizer["ManualSyncDesc"]</p>
-                <Button Color="Color.Primary" Icon="fa-solid fa-bolt" Text="@Localizer["ForceSync"]" IsAsync="true" OnClick="OnSyncClick" />
+                <div class="mb-3">
+                    <label class="form-label">@Localizer["SelectRepository"]</label>
+                    <Select @bind-Value="_selectedRepoId" Items="_repoItems" />
+                </div>
+                <div class="d-flex gap-2">
+                    <Button Color="Color.Primary" Icon="fa-solid fa-bolt" Text="@Localizer["ForceSync"]" 
+                            IsAsync="true" OnClick="OnSyncClick" />
+                    <Button Color="Color.Secondary" Icon="fa-solid fa-sync" Text="@Localizer["SyncAll"]" 
+                            IsAsync="true" OnClick="OnSyncAllClick" />
+                </div>
                 
                 @if (!string.IsNullOrEmpty(_syncResult))
                 {
@@ -49,22 +57,104 @@
     </div>
 </div>
 
+@if (_repositories.Count > 0)
+{
+    <div class="row g-3 mt-3">
+        <div class="col-12">
+            <h4><i class="fa-solid fa-database"></i> @Localizer["RepositoryCards"]</h4>
+        </div>
+        @foreach (var repo in _repositories)
+        {
+            <div class="col-12 col-md-6 col-lg-4">
+                <RepositoryCard Repository="repo" OnRepositoryChanged="LoadRepositories" />
+            </div>
+        }
+    </div>
+}
+
 @code {
     private string _syncResult = "";
-    private AppSettingsModel _settings = new();
+    private string? _selectedRepoId;
+    private List<RepositoryInfo> _repositories = new();
+    private List<SelectedItem> _repoItems = new();
 
     protected override void OnInitialized()
     {
-        _settings = SettingsManager.LoadSettings();
+        base.OnInitialized();
+        LoadRepositories();
+    }
+
+    private void LoadRepositories()
+    {
+        _repositories = RepositoryManager.LoadRepositories();
+        _repoItems = _repositories.Select(r => new SelectedItem(r.Id, r.Name)).ToList();
+        
+        // Select first enabled repository by default
+        if (string.IsNullOrEmpty(_selectedRepoId) && _repoItems.Count > 0)
+        {
+            _selectedRepoId = _repoItems.First().Value;
+        }
+    }
+
+    private string GetLastSyncTime()
+    {
+        var lastSync = _repositories
+            .Where(r => r.LastSyncAt.HasValue)
+            .OrderByDescending(r => r.LastSyncAt)
+            .FirstOrDefault();
+
+        if (lastSync?.LastSyncAt == null)
+            return Localizer["Never"];
+
+        var diff = DateTime.UtcNow - lastSync.LastSyncAt.Value;
+        if (diff.TotalMinutes < 60)
+            return $"{(int)diff.TotalMinutes}m ago";
+        if (diff.TotalHours < 24)
+            return $"{(int)diff.TotalHours}h ago";
+        return $"{(int)diff.TotalDays}d ago";
     }
 
     private async Task OnSyncClick()
     {
-        _syncResult = "Syncing in background... Check the Docker logs for detailed extraction progress.";
+        if (string.IsNullOrEmpty(_selectedRepoId))
+        {
+            _syncResult = Localizer["SelectRepositoryFirst"];
+            return;
+        }
+
+        var repo = _repositories.FirstOrDefault(r => r.Id == _selectedRepoId);
+        if (repo == null)
+        {
+            _syncResult = Localizer["RepositoryNotFound"];
+            return;
+        }
+
+        _syncResult = string.Format(Localizer["SyncingRepo"], repo.Name);
         await InvokeAsync(StateHasChanged);
         
-        await GitSync.Invoke();
+        // Trigger sync - the actual sync will happen via the job
+        await RepositoryService.TriggerSyncAsync(_selectedRepoId);
         
-        _syncResult = "Sync Finished! RAG datasets have been updated.";
+        _syncResult = string.Format(Localizer["SyncTriggered"], repo.Name);
+        
+        // Reload to get updated status
+        LoadRepositories();
+    }
+
+    private async Task OnSyncAllClick()
+    {
+        _syncResult = string.Format(Localizer["SyncingAll"], _repositories.Count);
+        await InvokeAsync(StateHasChanged);
+        
+        // Trigger sync for all enabled repositories
+        foreach (var repo in _repositories.Where(r => r.IsEnabled))
+        {
+            await RepositoryService.TriggerSyncAsync(repo.Id);
+        }
+        
+        _syncResult = string.Format(Localizer["SyncAllTriggered"], _repositories.Count(r => r.IsEnabled));
+        
+        // Reload to get updated status
+        LoadRepositories();
     }
 }

@@ -1,0 +1,41 @@
+{
+  "$schema": "./metadata-schema.json",
+  "index": {
+    "version": "1.0.0",
+    "lastUpdated": "2026-03-10T00:00:00Z",
+    "totalRepositories": 1
+  },
+  "repositories": [
+    {
+      "id": "bootstrap-blazor",
+      "name": "BootstrapBlazor",
+      "slug": "bootstrap-blazor",
+      "configFile": "bootstrap-blazor.json",
+      "framework": "BlazorComponent",
+      "isEnabled": true,
+      "description": "A UI component library based on Bootstrap 5 for Blazor"
+    }
+  ],
+  "availableTemplates": [
+    {
+      "name": "Blazor Component Library",
+      "configFile": "templates/blazor-component-template.json",
+      "framework": "BlazorComponent"
+    },
+    {
+      "name": ".NET Class Library",
+      "configFile": "templates/dotnet-library-template.json",
+      "framework": "DotNetLibrary"
+    },
+    {
+      "name": "Markdown Documentation",
+      "configFile": "templates/markdown-docs-template.json",
+      "framework": "MarkdownDocs"
+    },
+    {
+      "name": "Custom Extraction Script",
+      "configFile": "templates/custom-script-template.json",
+      "framework": "CustomScript"
+    }
+  ]
+}

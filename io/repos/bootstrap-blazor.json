@@ -1,0 +1,220 @@
+{
+  "$schema": "./metadata-schema.json",
+  "id": "bootstrap-blazor",
+  "name": "BootstrapBlazor",
+  "slug": "bootstrap-blazor",
+  "description": "A UI component library based on Bootstrap 5, providing enterprise-level Blazor components for building modern web applications",
+  "url": "https://gitee.com/LongbowEnterprise/BootstrapBlazor.git",
+  "provider": "Gitee",
+  "frameworkCompatibility": {
+    "primaryFramework": "Blazor",
+    "frameworkVersions": ["net8.0", "net9.0", "net10.0"],
+    "language": "C#",
+    "minDotNetVersion": "net8.0"
+  },
+  "aiModelCapabilities": {
+    "supportedModels": ["gpt-4o", "gpt-4o-mini", "claude-3.5-sonnet"],
+    "recommendedModel": "gpt-4o",
+    "requiresVision": false,
+    "requiresFunctionCalling": false,
+    "contextWindow": 128000,
+    "optimalTemperature": 0.3,
+    "maxTokens": 4096
+  },
+  "intendedUseCases": {
+    "primaryUseCase": "UI Components",
+    "secondaryUseCases": [
+      "Component Development",
+      "Enterprise Applications",
+      "Admin Dashboards",
+      "Data Entry Forms"
+    ],
+    "targetAudience": ["Developers", "Enterprise Users"],
+    "difficultyLevel": "Intermediate"
+  },
+  "configurationParameters": {
+    "requiredSettings": [
+      {
+        "name": "RepositoryUrl",
+        "type": "string",
+        "description": "Git repository URL for BootstrapBlazor",
+        "defaultValue": "https://gitee.com/LongbowEnterprise/BootstrapBlazor.git",
+        "required": true
+      },
+      {
+        "name": "LocalPath",
+        "type": "string",
+        "description": "Local clone directory path",
+        "defaultValue": "/app/data/BootstrapBlazorRepo",
+        "required": true
+      },
+      {
+        "name": "OutputDir",
+        "type": "string",
+        "description": "RAG output directory for extracted documentation",
+        "defaultValue": "/app/data/OutputRAG",
+        "required": true
+      },
+      {
+        "name": "CronSchedule",
+        "type": "string",
+        "description": "Cron schedule for repository sync",
+        "defaultValue": "0 3 * * *",
+        "required": false
+      }
+    ],
+    "optionalSettings": [
+      {
+        "name": "TargetFramework",
+        "type": "string",
+        "description": "Target .NET framework version",
+        "defaultValue": "net10.0",
+        "required": false
+      },
+      {
+        "name": "BuildProjectPath",
+        "type": "string",
+        "description": "Relative path to main .csproj file",
+        "defaultValue": "src/BootstrapBlazor/BootstrapBlazor.csproj",
+        "required": false
+      }
+    ],
+    "environmentVariables": [
+      {
+        "name": "AI_BASE_URL",
+        "description": "OpenAI-compatible API base URL",
+        "required": false,
+        "example": "https://api.openai.com/v1"
+      },
+      {
+        "name": "AI_API_KEY",
+        "description": "API key for AI service",
+        "required": false,
+        "example": "sk-..."
+      },
+      {
+        "name": "AI_MODEL",
+        "description": "AI model to use",
+        "required": false,
+        "example": "gpt-4o"
+      }
+    ]
+  },
+  "integrationRequirements": {
+    "requiredPackages": [
+      {
+        "id": "BootstrapBlazor",
+        "version": "8.0.0+",
+        "purpose": "Core UI component library"
+      },
+      {
+        "id": "Microsoft.AspNetCore.Components",
+        "version": "8.0.0+",
+        "purpose": "Blazor framework"
+      },
+      {
+        "id": "Bootstrap5",
+        "version": "5.0.0+",
+        "purpose": "CSS framework"
+      }
+    ],
+    "requiredServices": [
+      "AddBootstrapBlazor()",
+      "AddRazorComponents()"
+    ],
+    "middlewareRequirements": [
+      "UseBootstrapBlazor()"
+    ],
+    "databaseRequirements": ["None"],
+    "externalDependencies": []
+  },
+  "extractionConfig": {
+    "extractorType": "BlazorComponent",
+    "buildCommand": "dotnet build",
+    "buildProjectPath": "src/BootstrapBlazor/BootstrapBlazor.csproj",
+    "dllName": "BootstrapBlazor.dll",
+    "xmlDocsPath": "src/BootstrapBlazor/BootstrapBlazor.xml",
+    "docsPath": "src/BootstrapBlazor.Server/docs.json",
+    "samplesPath": "src/BootstrapBlazor.Server/Components/Samples",
+    "localizationPath": "src/BootstrapBlazor.Server/Locales",
+    "apiOutputFormat": "markdown",
+    "componentNamespace": "BootstrapBlazor.Components"
+  },
+  "constraints": {
+    "maxFileSize": 10485760,
+    "excludedPaths": ["bin", "obj", "node_modules", ".git", "test", "tests"],
+    "excludedFilePatterns": [
+      "*.min.js",
+      "*.d.ts",
+      "*.map",
+      "*.min.css",
+      "*.db",
+      "*.sqlite"
+    ],
+    "rateLimits": {
+      "maxRequestsPerMinute": 60,
+      "maxConcurrentOperations": 4
+    },
+    "licensing": "Apache-2.0",
+    "requiresNetwork": true
+  },
+  "versionInfo": {
+    "metadataVersion": "1.0.0",
+    "repositoryVersion": "8.0.0",
+    "lastUpdated": "2026-03-10T00:00:00Z",
+    "compatibleWith": ["1.0.0", "1.1.0", "2.0.0"]
+  },
+  "dependencyRelationships": {
+    "dependsOn": [],
+    "relatedRepositories": [
+      "bootstrap-blazor-mono",
+      "bootstrap-blazor-docs"
+    ],
+    "parentRepository": null
+  },
+  "usagePattern": {
+    "recommendedWorkflow": [
+      "1. Clone the repository to local path",
+      "2. Build the project to generate XML documentation",
+      "3. Run extraction to generate RAG-ready markdown files",
+      "4. Query components using MCP tools"
+    ],
+    "bestPractices": [
+      "Always check if component has been built before extraction",
+      "Use the component name exactly as it appears in API docs",
+      "Enable AI integration for natural language queries",
+      "Schedule regular syncs to keep documentation up to date"
+    ],
+    "commonPitfalls": [
+      "Forgetting to build the project before extraction",
+      "Using incorrect component names (case-sensitive)",
+      "Not enabling AI integration for expert queries",
+      "Ignoring localization files for Chinese language support"
+    ],
+    "examplePrompts": [
+      "What parameters does the Table component support?",
+      "How do I implement pagination with the Table component?",
+      "Show me an example of using the Modal component",
+      "What is the difference between Editor and TextBox components?"
+    ]
+  },
+  "promptTemplates": {
+    "systemPrompt": "You are a senior BootstrapBlazor expert. The user is asking a question about the component '{{componentName}}'.\nHere is the official API parameter documentation for this component:\n=== API START ===\n{{apiContent}}\n=== API END ===\n\nHere are the official code samples for this component:\n=== SAMPLES START ===\n{{sampleContent}}\n=== SAMPLES END ===\n\nBased strictly on the API and examples provided above (and your general Blazor server knowledge), please answer the user's question clearly and concisely.\nIf writing code, ensure you use the exact parameter names listed in the API table.",
+    "componentQueryTemplate": "What are the parameters available for the {{componentName}} component?",
+    "searchTemplate": "Search for BootstrapBlazor components matching: {{keyword}}",
+    "docsTemplate": "# Component: {{componentName}}\n\n## API\n{{apiContent}}\n\n## Samples\n{{sampleContent}}",
+    "expertQueryTemplate": "Based on the API documentation and code samples provided, answer the user's question about {{componentName}}: {{question}}",
+    "variables": {
+      "framework": "BootstrapBlazor",
+      "componentName": "Component name from BootstrapBlazor",
+      "apiContent": "API documentation from XML",
+      "sampleContent": "Code samples from .razor files"
+    }
+  },
+  "metadata": {
+    "version": "1.0.0",
+    "lastUpdated": "2026-03-10T00:00:00Z",
+    "author": "MCP Server Team",
+    "description": "Comprehensive metadata for BootstrapBlazor repository configuration"
+  }
+}
