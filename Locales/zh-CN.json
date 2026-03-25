@@ -26,7 +26,15 @@
         "SettingsSaved": "保存成功",
         "SettingsSavedDesc": "配置更改已持久化保存至本地。部分修改可能需要重启容器才能完全应用。",
         "AiEnabled": "启用 AI 摘要",
-        "AiEnabledDesc": "关闭后，Ask 接口将直接返回原始文档，而不调用 AI 服务。"
+        "AiEnabledDesc": "关闭后，Ask 接口将直接返回原始文档，而不调用 AI 服务。",
+        "McpClientConfig": "MCP 客户端配置",
+        "McpClientConfigDesc": "配置您的 MCP 客户端以连接到此服务器。可选择 Stdio（本地进程）或 SSE（HTTP）传输模式。",
+        "ApiEndpoints": "REST API 端点",
+        "DirectApiAccess": "直接 API 访问",
+        "EndpointComponentsDesc": "获取所有可用组件列表",
+        "EndpointSearchDesc": "按关键字搜索组件",
+        "EndpointDocsDesc": "获取组件文档",
+        "EndpointAskDesc": "向 AI 询问组件问题"
     },
     "BootstrapBlazor.McpServer.Services.AppSettingsModel": {
         "RepositoryUrl": "Git 仓库地址",

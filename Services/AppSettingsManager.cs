@@ -10,25 +10,33 @@ namespace BootstrapBlazor.McpServer.Services;
 public class AppSettingsManager
 {
     private readonly string _settingFilePath;
+    private readonly ILogger<AppSettingsManager>? _logger;
 
-    public AppSettingsManager()
+    public AppSettingsManager(ILogger<AppSettingsManager>? logger = null)
     {
-        var dataDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data");
-        if (!Directory.Exists(dataDir))
-        {
-            Directory.CreateDirectory(dataDir);
-        }
+        _logger = logger;
+        
+        // Use PathHelper to get the data path relative to the application
+        var dataDir = PathHelper.GetDataPath();
         _settingFilePath = Path.Combine(dataDir, "config.json");
     }
 
     public AppSettingsModel LoadSettings()
     {
         var model = new AppSettingsModel();
-        if (!File.Exists(_settingFilePath)) return model;
+        if (!File.Exists(_settingFilePath)) 
+        {
+            model.EnsurePaths();
+            return model;
+        }
 
         var json = File.ReadAllText(_settingFilePath);
         var root = JsonNode.Parse(json);
-        if (root == null) return model;
+        if (root == null) 
+        {
+            model.EnsurePaths();
+            return model;
+        }
 
         var gitSync = root["GitSync"];
         if (gitSync?["RepositoryUrl"] is { } repoUrl) model.RepositoryUrl = repoUrl.ToString();
@@ -45,6 +53,9 @@ public class AppSettingsManager
         var auth = root["Auth"];
         if (auth?["AdminUsername"] is { } username) model.AdminUsername = username.ToString();
         if (auth?["AdminPassword"] is { } password) model.AdminPassword = password.ToString();
+
+        // Ensure paths are computed using PathHelper if not explicitly set
+        model.EnsurePaths();
 
         return model;
     }
@@ -87,12 +98,27 @@ public class AppSettingsModel
 {
     public string RepositoryUrl { get; set; } = "https://gitee.com/LongbowEnterprise/BootstrapBlazor.git";
     public string CronSchedule { get; set; } = "0 3 * * *";
-    public string LocalPath { get; set; } = "/app/data/BootstrapBlazorRepo";
-    public string OutputDir { get; set; } = "/app/data/OutputRAG";
+    public string LocalPath { get; set; } = ""; // Will be computed from PathHelper if empty
+    public string OutputDir { get; set; } = ""; // Will be computed from PathHelper if empty
     public string AiBaseUrl { get; set; } = "https://api.openai.com/v1";
-    public string AiApiKey { get; set; } = "YOUR_API_KEY_HERE";
+    public string AiApiKey { get; set; } = ""; // No default - must be configured
     public string AiModel { get; set; } = "gpt-4o";
     public bool AiEnabled { get; set; } = false;
     public string AdminUsername { get; set; } = "admin";
-    public string AdminPassword { get; set; } = "123456";
+    public string AdminPassword { get; set; } = ""; // Must be changed on first use
+
+    /// <summary>
+    /// Compute default paths using PathHelper if not explicitly set
+    /// </summary>
+    public void EnsurePaths()
+    {
+        if (string.IsNullOrEmpty(LocalPath))
+        {
+            LocalPath = Path.Combine(PathHelper.GetDataPath(), "repositories", "BootstrapBlazor");
+        }
+        if (string.IsNullOrEmpty(OutputDir))
+        {
+            OutputDir = Path.Combine(PathHelper.GetDataPath(), "OutputRAG");
+        }
+    }
 }

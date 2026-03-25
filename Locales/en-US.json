@@ -26,7 +26,15 @@
         "SettingsSaved": "Settings Saved",
         "SettingsSavedDesc": "The configuration changes have been written. You may need to restart the server to see all effects.",
         "AiEnabled": "Enable AI Summary",
-        "AiEnabledDesc": "When disabled, the Ask endpoint returns raw documentation instead of calling the AI service."
+        "AiEnabledDesc": "When disabled, the Ask endpoint returns raw documentation instead of calling the AI service.",
+        "McpClientConfig": "MCP Client Configuration",
+        "McpClientConfigDesc": "Configure your MCP clients to connect to this server. Choose between Stdio (local process) or SSE (HTTP) transport modes.",
+        "ApiEndpoints": "REST API Endpoints",
+        "DirectApiAccess": "Direct API Access",
+        "EndpointComponentsDesc": "Get list of all available components",
+        "EndpointSearchDesc": "Search components by keyword",
+        "EndpointDocsDesc": "Get documentation for a component",
+        "EndpointAskDesc": "Ask AI about a component"
     },
     "BootstrapBlazor.McpServer.Services.AppSettingsModel": {
         "RepositoryUrl": "Git Repository URL",

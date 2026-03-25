@@ -13,6 +13,7 @@ public class McpService
     private readonly AiIntegrationService _aiService;
     private readonly ILogger<McpService> _logger;
     private readonly AppSettingsManager _settingsManager;
+    private const string ComponentName = "McpService";
 
     public McpService(DocsExtractorService extractor, AiIntegrationService aiService, ILogger<McpService> logger, AppSettingsManager settingsManager)
     {

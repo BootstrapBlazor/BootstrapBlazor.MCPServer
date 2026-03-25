@@ -27,12 +27,16 @@ public class DocsExtractorService
         string docsJsonPath = Path.Combine(basePath, "src/BootstrapBlazor.Server/docs.json");
         string xmlPath = Path.Combine(basePath, "src/BootstrapBlazor/BootstrapBlazor.xml");
         string samplesPath = Path.Combine(basePath, "src/BootstrapBlazor.Server/Components/Samples");
-        string localePath = Path.Combine(basePath, "src/BootstrapBlazor.Server/Locales/zh-CN.json");
-        string? dllPath = Path.Combine(basePath, "src/BootstrapBlazor/bin/Release/net10.0/BootstrapBlazor.dll");
+        string localePath = Path.Combine(basePath, "src/BootstrapBlazor.Server/Locales/en-US.json");
+        // Use English locale instead of Chinese
+        string? dllPath = Path.Combine(basePath, "src/BootstrapBlazor.Server/bin/Release/net10.0/BootstrapBlazor.dll");
 
         if (!File.Exists(dllPath))
         {
-            dllPath = Directory.GetFiles(Path.Combine(basePath, "src/BootstrapBlazor/bin"), "BootstrapBlazor.dll", SearchOption.AllDirectories).FirstOrDefault();
+            // Fallback: search for any BootstrapBlazor.dll, prefer Release builds
+            dllPath = Directory.GetFiles(Path.Combine(basePath, "src/BootstrapBlazor.Server/bin"), "BootstrapBlazor.dll", SearchOption.AllDirectories)
+                .OrderByDescending(p => p.Contains("Release"))
+                .FirstOrDefault();
             if (dllPath == null)
             {
                 _logger.LogWarning("BootstrapBlazor.dll not found. The project must be built first before extraction.");

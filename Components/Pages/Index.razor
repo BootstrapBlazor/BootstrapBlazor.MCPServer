@@ -1,70 +1,347 @@
 @page "/"
+@using BootstrapBlazor.Components
 @using BootstrapBlazor.McpServer.Services
-@using Microsoft.AspNetCore.Authorization
 @using Microsoft.Extensions.Localization
-@attribute [Authorize]
+@implements IDisposable
 @inject GitSyncInvocable GitSync
 @inject AppSettingsManager SettingsManager
-@inject IJSRuntime JSRuntime
+@inject McpService McpService
 @inject IStringLocalizer<Index> Localizer
+@inject NavigationManager Nav
+@inject SyncStatusService SyncStatus
 
 <PageTitle>@Localizer["PageTitle"]</PageTitle>
 
-<div class="row g-3">
-    <div class="col-12 col-md-4">
-        <Card Color="Color.Primary" IsCenter="true">
+<Navbar BackgroundColorCssClass="bg-dark" Class="mb-4 shadow-sm">
+    <NavbarBrand>
+        <i class="fa-solid fa-cube text-white me-2"></i>
+        <span class="fw-bold text-white">@Localizer["PageTitle"]</span>
+    </NavbarBrand>
+    <div class="d-flex align-items-center gap-2">
+        @* Quick Actions in Navbar *@
+        <Button Color="Color.Primary" Size="Size.Small" OnClick="OnSyncClick" IsDisabled="SyncStatus.IsSyncing" Icon="fa-solid fa-rotate">
+            @if (SyncStatus.IsSyncing)
+            {
+                <i class="fa-solid fa-spinner fa-spin"></i>
+            }
+            @Localizer["ForceSync"]
+        </Button>
+        <Button Color="Color.Success" Size="Size.Small" OnClick="NavigateToBrowse" IsDisabled="SyncStatus.IsSyncing" Icon="fa-solid fa-magnifying-glass">
+            Browse
+        </Button>
+        <Button Color="Color.Warning" Size="Size.Small" OnClick="NavigateToConfig" IsDisabled="SyncStatus.IsSyncing" Icon="fa-solid fa-gears">
+            Settings
+        </Button>
+    </div>
+</Navbar>
+
+<div class="row g-4">
+    @* Sync Progress Card - shown when syncing *@
+    @if (SyncStatus.IsSyncing || !string.IsNullOrEmpty(SyncStatus.StatusMessage))
+    {
+        <div class="col-12">
+            <Card>
+                <HeaderTemplate>
+                    @if (SyncStatus.IsSyncing)
+                    {
+                        <i class="fa-solid fa-spinner fa-spin"></i>
+                    }
+                    else if (!string.IsNullOrEmpty(SyncStatus.ErrorMessage))
+                    {
+                        <i class="fa-solid fa-exclamation-triangle text-danger"></i>
+                    }
+                    else
+                    {
+                        <i class="fa-solid fa-check-circle text-success"></i>
+                    }
+                    <span class="ms-2">@(SyncStatus.IsSyncing ? "Syncing..." : SyncStatus.CurrentStep)</span>
+                </HeaderTemplate>
+                <BodyTemplate>
+                    @if (SyncStatus.IsSyncing)
+                    {
+                        <div class="mb-3">
+                            <Progress Value="SyncStatus.Progress" ShowLabel="true" />
+                        </div>
+                        <div class="text-muted">@SyncStatus.StatusMessage</div>
+                    }
+                    else if (!string.IsNullOrEmpty(SyncStatus.ErrorMessage))
+                    {
+                        <Alert Color="Color.Danger">@SyncStatus.ErrorMessage</Alert>
+                    }
+                    else
+                    {
+                        <Alert Color="Color.Success" ShowDismiss="true" OnDismiss="OnDismissStatus">@SyncStatus.StatusMessage</Alert>
+                    }
+                </BodyTemplate>
+            </Card>
+        </div>
+    }
+
+    <!-- Server Status Card -->
+    <div class="col-12 col-md-6">
+        <Card class="h-100">
             <HeaderTemplate>
-                <div class="fw-bold"><i class="fa-solid fa-server"></i> @Localizer["ServerStatus"]</div>
+                <i class="fa-solid fa-server"></i> @Localizer["ServerStatus"]
             </HeaderTemplate>
             <BodyTemplate>
-                <h3 class="text-success mt-2">@Localizer["Online"]</h3>
-                <p class="text-muted mb-0">RAG Server running smoothly.</p>
-                <hr />
-                <div class="text-start fs-6">
-                    <div><b>@Localizer["Target"]:</b> @_settings.RepositoryUrl</div>
-                    <div><b>@Localizer["CronSchedule"]:</b> @_settings.CronSchedule</div>
-                    <div><b>OutputDir:</b> @_settings.OutputDir</div>
+                <div class="d-flex align-items-center mb-3">
+                    <Badge Color="Color.Success">Online</Badge>
+                    <span class="text-muted ms-2">MCP Server running smoothly</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <tbody>
+                            <tr>
+                                <td class="text-muted" style="width: 120px;">@Localizer["Target"]:</td>
+                                <td><code>@_settings.RepositoryUrl</code></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">@Localizer["CronSchedule"]:</td>
+                                <td><code>@_settings.CronSchedule</code></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Output Dir:</td>
+                                <td><code>@_settings.OutputDir</code></td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </BodyTemplate>
         </Card>
     </div>
 
-    <div class="col-12 col-md-8">
-        <Card>
+    <!-- Quick Actions Card -->
+    <div class="col-12 col-md-6">
+        <Card class="h-100">
             <HeaderTemplate>
-                <div class="fw-bold"><i class="fa-solid fa-rotate"></i> @Localizer["ManualSync"]</div>
+                <i class="fa-solid fa-bolt"></i> Quick Actions
             </HeaderTemplate>
             <BodyTemplate>
-                <p>@Localizer["ManualSyncDesc"]</p>
-                <Button Color="Color.Primary" Icon="fa-solid fa-bolt" Text="@Localizer["ForceSync"]" IsAsync="true" OnClick="OnSyncClick" />
-                
-                @if (!string.IsNullOrEmpty(_syncResult))
-                {
-                    <div class="alert alert-success mt-3" role="alert">
-                        <i class="fa-solid fa-check-circle me-2"></i> @_syncResult
-                    </div>
-                }
+                <div class="d-grid gap-2">
+                    <Button Color="Color.Primary" OnClick="OnSyncClick" IsDisabled="SyncStatus.IsSyncing">
+                        @if (SyncStatus.IsSyncing)
+                        {
+                            <i class="fa-solid fa-spinner fa-spin"></i>
+                        }
+                        else
+                        {
+                            <i class="fa-solid fa-rotate"></i>
+                        }
+                        @Localizer["ForceSync"]
+                    </Button>
+                    <Button Color="Color.Success" OnClick="NavigateToBrowse" IsDisabled="SyncStatus.IsSyncing">
+                        <i class="fa-solid fa-magnifying-glass"></i> Browse Components
+                    </Button>
+                    <Button Color="Color.Warning" OnClick="NavigateToConfig" IsDisabled="SyncStatus.IsSyncing">
+                        <i class="fa-solid fa-gears"></i> Settings
+                    </Button>
+                </div>
             </BodyTemplate>
         </Card>
     </div>
+
+    <!-- Available Components Card -->
+    <div class="col-12">
+        <Card>
+            <HeaderTemplate>
+                <i class="fa-solid fa-cube"></i> Available BootstrapBlazor Components (@ComponentList.Count)
+            </HeaderTemplate>
+            <BodyTemplate>
+                <p class="text-muted mb-3">Total components available for querying: @ComponentList.Count</p>
+                <div class="d-flex flex-wrap gap-2">
+                    @foreach (var comp in ComponentList.Take(50))
+                    {
+                        <Button Color="Color.Secondary" Size="Size.Small" OnClick="@(() => ViewComponent(comp))" IsDisabled="SyncStatus.IsSyncing">
+                            @comp
+                        </Button>
+                    }
+                    @if (ComponentList.Count > 50)
+                    {
+                        <span class="text-muted align-self-center ms-2">...and @(ComponentList.Count - 50) more</span>
+                    }
+                </div>
+            </BodyTemplate>
+        </Card>
+    </div>
+
+    <!-- MCP Endpoints Card -->
+    <div class="col-12">
+        <Card>
+            <HeaderTemplate>
+                <i class="fa-solid fa-plug"></i> MCP API Endpoints
+            </HeaderTemplate>
+            <BodyTemplate>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <Card IsBorder="true">
+                            <BodyTemplate>
+                                <div class="mb-1">
+                                    <Badge Color="Color.Success">GET</Badge>
+                                    <code class="ms-2">/api/components</code>
+                                </div>
+                                <small class="text-muted">Returns list of all available BootstrapBlazor components</small>
+                            </BodyTemplate>
+                        </Card>
+                    </div>
+                    <div class="col-md-6">
+                        <Card IsBorder="true">
+                            <BodyTemplate>
+                                <div class="mb-1">
+                                    <Badge Color="Color.Success">GET</Badge>
+                                    <code class="ms-2">/api/components/search?keyword=xxx</code>
+                                </div>
+                                <small class="text-muted">Search components by keyword</small>
+                            </BodyTemplate>
+                        </Card>
+                    </div>
+                    <div class="col-md-6">
+                        <Card IsBorder="true">
+                            <BodyTemplate>
+                                <div class="mb-1">
+                                    <Badge Color="Color.Success">GET</Badge>
+                                    <code class="ms-2">/api/components/{name}/docs</code>
+                                </div>
+                                <small class="text-muted">Get documentation for a specific component</small>
+                            </BodyTemplate>
+                        </Card>
+                    </div>
+                    <div class="col-md-6">
+                        <Card IsBorder="true">
+                            <BodyTemplate>
+                                <div class="mb-1">
+                                    <Badge Color="Color.Success">GET</Badge>
+                                    <code class="ms-2">/api/components/{name}/ask?q=xxx</code>
+                                </div>
+                                <small class="text-muted">Ask AI about a specific component</small>
+                            </BodyTemplate>
+                        </Card>
+                    </div>
+                </div>
+            </BodyTemplate>
+        </Card>
+    </div>
+
+    <!-- Sample Component Viewer -->
+    @if (!string.IsNullOrEmpty(SelectedComponent))
+    {
+        <div class="col-12">
+            <Card Color="Color.Primary">
+                <HeaderTemplate>
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <span><i class="fa-solid fa-file-lines"></i> @SelectedComponent Documentation</span>
+                        <Button Color="Color.Light" Size="Size.Small" OnClick="CloseComponent">
+                            <i class="fa-solid fa-times"></i>
+                        </Button>
+                    </div>
+                </HeaderTemplate>
+                <BodyTemplate>
+                    <div class="d-flex gap-2 mb-3">
+                        <Button Color="Color.Primary" OnClick="OnViewDocs">
+                            <i class="fa-solid fa-book"></i> View Docs
+                        </Button>
+                        <Button Color="Color.Success" OnClick="OnAskAI">
+                            <i class="fa-solid fa-robot"></i> Ask AI
+                        </Button>
+                    </div>
+                    @if (!string.IsNullOrEmpty(ComponentDocs))
+                    {
+                        <Card IsBorder="true">
+                            <BodyTemplate>
+                                <pre class="mb-0 bg-light p-3" style="white-space: pre-wrap;">@ComponentDocs</pre>
+                            </BodyTemplate>
+                        </Card>
+                    }
+                </BodyTemplate>
+            </Card>
+        </div>
+    }
 </div>
 
 @code {
-    private string _syncResult = "";
     private AppSettingsModel _settings = new();
+    private List<string> ComponentList { get; set; } = new();
+    private string SelectedComponent { get; set; } = "";
+    private string ComponentDocs { get; set; } = "";
 
     protected override void OnInitialized()
     {
         _settings = SettingsManager.LoadSettings();
+        LoadComponentList();
+        SyncStatus.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        SyncStatus.OnChange -= StateHasChanged;
+    }
+
+    private void LoadComponentList()
+    {
+        try
+        {
+            var result = McpService.GetComponentList();
+            ComponentList = result.Split('\n', StringSplitOptions.RemoveEmptyEntries).ToList();
+        }
+        catch { }
+    }
+
+    private void ViewComponent(string componentName)
+    {
+        SelectedComponent = componentName;
+        ComponentDocs = "";
+    }
+
+    private void CloseComponent()
+    {
+        SelectedComponent = "";
+        ComponentDocs = "";
+    }
+
+    private void NavigateToBrowse() => Nav.NavigateTo("/");
+    private void NavigateToConfig() => Nav.NavigateTo("/config");
+
+    private Task OnDismissStatus()
+    {
+        SyncStatus.UpdateProgress(0, "", "");
+        return Task.CompletedTask;
+    }
+
+    private void OnViewDocs()
+    {
+        if (string.IsNullOrEmpty(SelectedComponent)) return;
+        try
+        {
+            ComponentDocs = McpService.GetComponentDocs(new McpService.GetComponentDocsArgs { ComponentName = SelectedComponent });
+        }
+        catch { }
+    }
+
+    private void OnAskAI()
+    {
+        if (string.IsNullOrEmpty(SelectedComponent)) return;
+        try
+        {
+            var result = McpService.AskComponentExpert(new McpService.AskComponentExpertArgs
+            {
+                ComponentName = SelectedComponent,
+                Question = $"Give me a brief overview of the {SelectedComponent} component and its main features."
+            }).GetAwaiter().GetResult();
+
+            if (result.StartsWith("AI disabled"))
+            {
+                ComponentDocs = result.Replace("AI disabled - ", "");
+            }
+            else
+            {
+                ComponentDocs = result;
+            }
+        }
+        catch { }
     }
 
     private async Task OnSyncClick()
     {
-        _syncResult = "Syncing in background... Check the Docker logs for detailed extraction progress.";
-        await InvokeAsync(StateHasChanged);
-        
         await GitSync.Invoke();
-        
-        _syncResult = "Sync Finished! RAG datasets have been updated.";
+        LoadComponentList();
     }
 }

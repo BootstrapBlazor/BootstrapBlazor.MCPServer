@@ -1,73 +1,236 @@
 @page "/config"
 @using BootstrapBlazor.McpServer.Services
-@using Microsoft.AspNetCore.Authorization
 @using Microsoft.Extensions.Localization
-@attribute [Authorize]
 @inject AppSettingsManager SettingsManager
 @inject ToastService ToastService
 @inject IStringLocalizer<Config> Localizer
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
 
 <PageTitle>@Localizer["PageTitle"]</PageTitle>
 
-<Card>
-    <HeaderTemplate>
-        <div class="fw-bold"><i class="fa-solid fa-gears"></i> @Localizer["ServerConfiguration"]</div>
-    </HeaderTemplate>
-    <BodyTemplate>
-        <ValidateForm Model="@Model" OnValidSubmit="OnSave">
-            <div class="row g-3">
-                <div class="col-12 col-sm-6">
-                    <BootstrapInput @bind-Value="Model.RepositoryUrl" />
+<div class="row g-4">
+    <!-- Server Configuration Card -->
+    <div class="col-12">
+        <Card>
+            <HeaderTemplate>
+                <div class="fw-bold"><i class="fa-solid fa-gears"></i> @Localizer["ServerConfiguration"]</div>
+            </HeaderTemplate>
+            <BodyTemplate>
+                <ValidateForm Model="@Model" OnValidSubmit="OnSave">
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <BootstrapInput @bind-Value="Model.RepositoryUrl" />
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <BootstrapInput @bind-Value="Model.CronSchedule" />
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <BootstrapInput @bind-Value="Model.LocalPath" />
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <BootstrapInput @bind-Value="Model.OutputDir" />
+                        </div>
+
+                        <Divider Text="@Localizer["AIContextSettings"]" />
+
+                        <div class="col-12 col-md-6">
+                            <BootstrapInput @bind-Value="Model.AiBaseUrl" />
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <BootstrapInput @bind-Value="Model.AiModel" />
+                        </div>
+                        <div class="col-12">
+                            <BootstrapInput @bind-Value="Model.AiApiKey" type="password" />
+                        </div>
+                        <div class="col-12 d-flex align-items-center gap-2">
+                            <Switch @bind-Value="Model.AiEnabled" ShowLabel="true" DisplayText="@Localizer["AiEnabled"]" />
+                            <small class="text-muted">@Localizer["AiEnabledDesc"]</small>
+                        </div>
+
+                        <Divider Text="@Localizer["SecuritySettings"]" />
+                        <div class="col-12 col-md-6">
+                            <BootstrapInput @bind-Value="Model.AdminUsername" />
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <BootstrapInput @bind-Value="Model.AdminPassword" type="password" />
+                        </div>
+
+                        <div class="col-12 mt-4 text-end">
+                            <Button Color="Color.Primary" Icon="fa-solid fa-save" Text="@Localizer["SaveConfiguration"]" ButtonType="ButtonType.Submit" />
+                        </div>
+                    </div>
+                </ValidateForm>
+            </BodyTemplate>
+        </Card>
+    </div>
+
+    <!-- MCP Client Configuration Section -->
+    <div class="col-12">
+        <Card>
+            <HeaderTemplate>
+                <div class="fw-bold"><i class="fa-solid fa-plug"></i> @Localizer["McpClientConfig"]</div>
+            </HeaderTemplate>
+            <BodyTemplate>
+                <p class="text-muted mb-4">@Localizer["McpClientConfigDesc"]</p>
+
+                <!-- Transport Mode Tabs -->
+                <div class="mb-3">
+                    <RadioList @bind-Value="_selectedTransport" Items="TransportItems" />
                 </div>
-                <div class="col-12 col-sm-6">
-                    <BootstrapInput @bind-Value="Model.CronSchedule" />
+
+                <div class="row g-4">
+                    @if (_selectedTransport == "stdio")
+                    {
+                        <!-- Claude Desktop -->
+                        <div class="col-12 col-lg-6">
+                            <Card IsBorder="true">
+                                <BodyTemplate>
+                                    <div class="mb-2">
+                                        <strong>Claude Desktop</strong>
+                                        <span class="text-muted ms-2">(Anthropic Official Client)</span>
+                                    </div>
+                                    <div class="mb-2">
+                                        <small class="text-muted">claude_desktop_config.json</small>
+                                    </div>
+                                    <div class="input-group">
+                                        <textarea class="form-control" rows="6" readonly>@GetClaudeStdioConfig()</textarea>
+                                        <button class="btn btn-outline-secondary" @onclick='() => CopyToClipboard("claude-stdio")'>
+                                            <i class="fa-solid fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </BodyTemplate>
+                            </Card>
+                        </div>
+
+                        <!-- VS Code / Cursor -->
+                        <div class="col-12 col-lg-6">
+                            <Card IsBorder="true">
+                                <BodyTemplate>
+                                    <div class="mb-2">
+                                        <strong>VS Code / Cursor</strong>
+                                        <span class="text-muted ms-2">(Settings JSON)</span>
+                                    </div>
+                                    <div class="mb-2">
+                                        <small class="text-muted">settings.json (mcp.servers)</small>
+                                    </div>
+                                    <div class="input-group">
+                                        <textarea class="form-control" rows="6" readonly>@GetVsCodeStdioConfig()</textarea>
+                                        <button class="btn btn-outline-secondary" @onclick='() => CopyToClipboard("vscode-stdio")'>
+                                            <i class="fa-solid fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </BodyTemplate>
+                            </Card>
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- SSE Mode Configurations -->
+                        <div class="col-12 col-lg-6">
+                            <Card IsBorder="true">
+                                <BodyTemplate>
+                                    <div class="mb-2">
+                                        <strong>Claude Desktop (SSE)</strong>
+                                        <span class="text-muted ms-2">(HTTP Transport)</span>
+                                    </div>
+                                    <div class="mb-2">
+                                        <small class="text-muted">claude_desktop_config.json</small>
+                                    </div>
+                                    <div class="input-group">
+                                        <textarea class="form-control" rows="6" readonly>@GetClaudeSseConfig()</textarea>
+                                        <button class="btn btn-outline-secondary" @onclick='() => CopyToClipboard("claude-sse")'>
+                                            <i class="fa-solid fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </BodyTemplate>
+                            </Card>
+                        </div>
+
+                        <div class="col-12 col-lg-6">
+                            <Card IsBorder="true">
+                                <BodyTemplate>
+                                    <div class="mb-2">
+                                        <strong>VS Code / Cursor (SSE)</strong>
+                                        <span class="text-muted ms-2">(HTTP Transport)</span>
+                                    </div>
+                                    <div class="mb-2">
+                                        <small class="text-muted">settings.json (mcp.servers)</small>
+                                    </div>
+                                    <div class="input-group">
+                                        <textarea class="form-control" rows="6" readonly>@GetVsCodeSseConfig()</textarea>
+                                        <button class="btn btn-outline-secondary" @onclick='() => CopyToClipboard("vscode-sse")'>
+                                            <i class="fa-solid fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </BodyTemplate>
+                            </Card>
+                        </div>
+                    }
+
+                    <!-- Generic cURL Examples -->
+                    <div class="col-12">
+                        <Card IsBorder="true">
+                            <BodyTemplate>
+                                <div class="mb-3">
+                                    <strong>@Localizer["ApiEndpoints"]</strong>
+                                    <span class="text-muted ms-2">@Localizer["DirectApiAccess"]</span>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-12 col-md-6">
+                                        <div class="d-flex align-items-center gap-2 p-2 border rounded">
+                                            <Badge Color="Color.Success">GET</Badge>
+                                            <code>/api/components</code>
+                                        </div>
+                                        <small class="text-muted">@Localizer["EndpointComponentsDesc"]</small>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <div class="d-flex align-items-center gap-2 p-2 border rounded">
+                                            <Badge Color="Color.Success">GET</Badge>
+                                            <code>/api/components/search?keyword=X</code>
+                                        </div>
+                                        <small class="text-muted">@Localizer["EndpointSearchDesc"]</small>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <div class="d-flex align-items-center gap-2 p-2 border rounded">
+                                            <Badge Color="Color.Success">GET</Badge>
+                                            <code>/api/components/{name}/docs</code>
+                                        </div>
+                                        <small class="text-muted">@Localizer["EndpointDocsDesc"]</small>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <div class="d-flex align-items-center gap-2 p-2 border rounded">
+                                            <Badge Color="Color.Success">GET</Badge>
+                                            <code>/api/components/{name}/ask?q=X</code>
+                                        </div>
+                                        <small class="text-muted">@Localizer["EndpointAskDesc"]</small>
+                                    </div>
+                                </div>
+                            </BodyTemplate>
+                        </Card>
+                    </div>
                 </div>
-                <div class="col-12 col-sm-6">
-                    <BootstrapInput @bind-Value="Model.LocalPath" />
-                </div>
-                <div class="col-12 col-sm-6">
-                    <BootstrapInput @bind-Value="Model.OutputDir" />
-                </div>
-                
-                <Divider Text="@Localizer["AIContextSettings"]" />
-                
-                <div class="col-12 col-sm-6">
-                    <BootstrapInput @bind-Value="Model.AiBaseUrl" />
-                </div>
-                <div class="col-12 col-sm-6">
-                    <BootstrapInput @bind-Value="Model.AiModel" />
-                </div>
-                <div class="col-12 mt-3">
-                    <BootstrapInput @bind-Value="Model.AiApiKey" type="password" />
-                </div>
-                <div class="col-12 mt-3 d-flex align-items-center gap-2">
-                    <Switch @bind-Value="Model.AiEnabled" ShowLabel="true" DisplayText="@Localizer["AiEnabled"]" />
-                    <small class="text-muted">@Localizer["AiEnabledDesc"]</small>
-                </div>
-                
-                <Divider Text="@Localizer["SecuritySettings"]" />
-                <div class="col-12 col-sm-6 mt-3">
-                    <BootstrapInput @bind-Value="Model.AdminUsername" />
-                </div>
-                <div class="col-12 col-sm-6 mt-3">
-                    <BootstrapInput @bind-Value="Model.AdminPassword" type="password" />
-                </div>
-                
-                <div class="col-12 mt-4 text-end">
-                    <Button Color="Color.Primary" Icon="fa-solid fa-save" Text="@Localizer["SaveConfiguration"]" ButtonType="ButtonType.Submit" />
-                </div>
-            </div>
-        </ValidateForm>
-    </BodyTemplate>
-</Card>
+            </BodyTemplate>
+        </Card>
+    </div>
+</div>
 
 @code {
     private AppSettingsModel Model { get; set; } = new();
+    private string _selectedTransport = "stdio";
+    private string _baseUrl = "";
+    
+    private IEnumerable<SelectedItem> TransportItems { get; } = new[]
+    {
+        new SelectedItem("stdio", "Stdio (Local Process)"),
+        new SelectedItem("sse", "SSE / HTTP")
+    };
 
     protected override void OnInitialized()
     {
         base.OnInitialized();
         Model = SettingsManager.LoadSettings();
+        _baseUrl = NavigationManager.BaseUri.TrimEnd('/');
     }
 
     private Task OnSave(EditContext context)
@@ -75,5 +238,84 @@
         SettingsManager.SaveSettings(Model);
         ToastService.Success(Localizer["SettingsSaved"], Localizer["SettingsSavedDesc"]);
         return Task.CompletedTask;
+    }
+
+    private string GetProjectPath()
+    {
+        // Get the project path relative to the running application
+        return AppDomain.CurrentDomain.BaseDirectory;
+    }
+
+    private string GetClaudeStdioConfig()
+    {
+        var projectPath = GetProjectPath();
+        return $$"""
+{
+  "mcpServers": {
+    "bootstrapblazor": {
+      "command": "dotnet",
+      "args": ["run", "--project", "{{projectPath}}BootstrapBlazor.McpServer.csproj"]
+    }
+  }
+}
+""";
+    }
+
+    private string GetVsCodeStdioConfig()
+    {
+        var projectPath = GetProjectPath();
+        return $$"""
+{
+  "mcp.servers": {
+    "bootstrapblazor": {
+      "command": "dotnet",
+      "args": ["run", "--project", "{{projectPath}}BootstrapBlazor.McpServer.csproj"]
+    }
+  }
+}
+""";
+    }
+
+    private string GetClaudeSseConfig()
+    {
+        return $$"""
+{
+  "mcpServers": {
+    "bootstrapblazor": {
+      "type": "sse",
+      "url": "{{_baseUrl}}/mcp"
+    }
+  }
+}
+""";
+    }
+
+    private string GetVsCodeSseConfig()
+    {
+        return $$"""
+{
+  "mcp.servers": {
+    "bootstrapblazor": {
+      "type": "sse",
+      "url": "{{_baseUrl}}/mcp"
+    }
+  }
+}
+""";
+    }
+
+    private async Task CopyToClipboard(string configId)
+    {
+        var configText = configId switch
+        {
+            "claude-stdio" => GetClaudeStdioConfig(),
+            "vscode-stdio" => GetVsCodeStdioConfig(),
+            "claude-sse" => GetClaudeSseConfig(),
+            "vscode-sse" => GetVsCodeSseConfig(),
+            _ => ""
+        };
+
+        await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", configText);
+        await ToastService.Success("Copied!", "Configuration copied to clipboard");
     }
 }

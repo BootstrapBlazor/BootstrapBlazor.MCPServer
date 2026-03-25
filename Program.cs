@@ -4,28 +4,27 @@
 
 using BootstrapBlazor.McpServer.Services;
 using Coravel;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
-builder.Logging.AddConsole(); // Must restore basic logging if docker container is inspecting
+builder.Logging.AddConsole();
+
+// Log startup information
+Console.WriteLine("[BootstrapBlazor] ================================================");
+Console.WriteLine("[BootstrapBlazor] BootstrapBlazor MCP Server Starting");
+Console.WriteLine("[BootstrapBlazor] ================================================");
+Console.WriteLine($"[BootstrapBlazor] Base Path: {PathHelper.GetBasePath()}");
+Console.WriteLine($"[BootstrapBlazor] Data Path: {PathHelper.GetDataPath()}");
+Console.WriteLine("[BootstrapBlazor] ================================================");
 
 // Add Services
+builder.Services.AddSingleton<SyncStatusService>();
 builder.Services.AddSingleton<DocsExtractorService>();
 builder.Services.AddTransient<GitSyncInvocable>();
 builder.Services.AddSingleton<McpService>();
 builder.Services.AddHttpClient<AiIntegrationService>();
 builder.Services.AddSingleton<AppSettingsManager>();
 
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(options =>
-    {
-        options.LoginPath = "/login";
-    });
-builder.Services.AddAuthorization();
-builder.Services.AddCascadingAuthenticationState();
 // Add localization
 builder.Services.AddLocalization();
 
@@ -36,9 +35,11 @@ builder.Services.AddBootstrapBlazor();
 builder.Services.AddScheduler();
 var mcpBuilder = builder.Services.AddMcpServer();
 
-// Disable Stdio transport if running in Docker container, as it will crash Kestrel
-// on startup due to immediate EOF on empty standard input.
-if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") != "true")
+// Disable Stdio transport if running in Docker container or development mode,
+// as it will crash Kestrel on startup due to immediate EOF on empty standard input.
+var isContainer = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true";
+var disableStdio = isContainer || Environment.GetEnvironmentVariable("DISABLE_STDIO") == "true";
+if (!disableStdio)
 {
     mcpBuilder.WithStdioServerTransport();
 }
@@ -48,8 +49,8 @@ mcpBuilder.WithHttpTransport()       // Native MCP SSE support via ASP.NET Core
 
 var app = builder.Build();
 
-// Configure the localization middleware
-var supportedCultures = new[] { "en-US", "zh-CN" };
+// Configure the localization middleware - default to English only
+var supportedCultures = new[] { "en-US" };
 var localizationOptions = new RequestLocalizationOptions()
     .SetDefaultCulture(supportedCultures[0])
     .AddSupportedCultures(supportedCultures)
@@ -59,8 +60,7 @@ app.UseRequestLocalization(localizationOptions);
 
 app.UseStaticFiles();
 app.UseRouting();
-app.UseAuthentication();
-app.UseAuthorization();
+
 app.UseAntiforgery();
 
 // Configure Coravel Cron Job
@@ -98,31 +98,13 @@ app.MapGet("/api/components/{name}/docs", (string name, McpService mcp) =>
     return Results.Text(docs, "text/markdown");
 });
 
-// Authentication Endpoint for Ajax Login
-app.MapPost("/api/login", async (HttpContext context, AppSettingsManager config, string username, string password) =>
-{
-    var settings = config.LoadSettings();
-    if (username == settings.AdminUsername && password == settings.AdminPassword)
-    {
-        var claims = new List<Claim> { new Claim(ClaimTypes.Name, username) };
-        var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-        await context.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity));
-        return Results.Ok();
-    }
-    return Results.Unauthorized();
-});
-
-// Logout endpoint
-app.MapPost("/api/logout", async (HttpContext context) =>
-{
-    await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-    return Results.Ok();
-});
-
 app.MapRazorComponents<BootstrapBlazor.McpServer.Components.App>()
    .AddInteractiveServerRenderMode();
 
 app.MapMcp("/mcp");
+
+Console.WriteLine("[BootstrapBlazor] MCP Server initialization complete");
+Console.WriteLine("[BootstrapBlazor] ================================================");
 
 // Avoid port conflicts, run via Stdio but also spin up Kestrel quietly
 // In some environments, starting both might cause issues, but builder.Run() operates on console
